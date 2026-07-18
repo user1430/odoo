@@ -70,6 +70,87 @@ def odoo_write(model: str, ids: list, vals: dict) -> bool:
     return client.write(model, ids, vals)
 
 
+# ---------- CRM 专属工具 ----------
+
+_LEAD_FIELDS = [
+    "name",
+    "type",
+    "contact_name",
+    "email_from",
+    "phone",
+    "partner_id",
+    "user_id",
+    "team_id",
+    "stage_id",
+    "probability",
+    "expected_revenue",
+    "date_deadline",
+    "priority",
+]
+
+
+@mcp.tool()
+def list_leads(type: str = "", stage_id: int | None = None, limit: int = 20) -> list:
+    """查询销售线索/商机 (crm.lead)。type 可留空，或 lead(线索)/opportunity(商机)；stage_id 为阶段 ID。"""
+    domain: list = []
+    if type:
+        domain.append(["type", "=", type])
+    if stage_id is not None:
+        domain.append(["stage_id", "=", stage_id])
+    return client.search_read(
+        "crm.lead", domain, _LEAD_FIELDS, limit=limit, order="id desc"
+    )
+
+
+@mcp.tool()
+def get_lead(lead_id: int) -> dict:
+    """读取单条销售线索/商机 (crm.lead) 的完整信息。"""
+    recs = client.read("crm.lead", [lead_id])
+    return recs[0] if recs else {}
+
+
+@mcp.tool()
+def list_opportunities(stage_id: int | None = None, limit: int = 20) -> list:
+    """查询商机 (crm.lead, type=opportunity)，可按 stage_id 过滤。"""
+    domain = [["type", "=", "opportunity"]]
+    if stage_id is not None:
+        domain.append(["stage_id", "=", stage_id])
+    return client.search_read(
+        "crm.lead", domain, _LEAD_FIELDS, limit=limit, order="id desc"
+    )
+
+
+@mcp.tool()
+def create_lead(
+    name: str,
+    type: str = "lead",
+    contact_name: str = "",
+    email_from: str = "",
+    phone: str = "",
+    user_id: int | None = None,
+    team_id: int | None = None,
+    expected_revenue: float = 0.0,
+    stage_id: int | None = None,
+) -> int:
+    """创建一条销售线索/商机 (crm.lead)。要求 ODOO_READONLY=false。"""
+    vals: dict = {"name": name, "type": type}
+    if contact_name:
+        vals["contact_name"] = contact_name
+    if email_from:
+        vals["email_from"] = email_from
+    if phone:
+        vals["phone"] = phone
+    if user_id is not None:
+        vals["user_id"] = user_id
+    if team_id is not None:
+        vals["team_id"] = team_id
+    if expected_revenue:
+        vals["expected_revenue"] = expected_revenue
+    if stage_id is not None:
+        vals["stage_id"] = stage_id
+    return client.create("crm.lead", vals)
+
+
 # ---------- 制造专属工具 ----------
 
 

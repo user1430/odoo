@@ -79,6 +79,10 @@ WorkBuddy 支持自定义 MCP Server（界面或 CLI 配置）。填入如下配
 `workorder_progress`（工序进度）、`list_bom`（BOM 展开）、`stock_available`（库存可用量）、
 `create_production_order`（创建工单，需关闭只读）。
 
+CRM 专属（需先安装 `crm` 模块）：`list_leads`（线索/商机，可按 type=lead/opportunity
+与 stage_id 过滤）、`get_lead`（读取单条）、`list_opportunities`（商机列表）、
+`create_lead`（创建线索/商机，需关闭只读）。
+
 ## 备注
 
 - 日志写到 stderr，避免污染 stdio 的 JSON-RPC 通道。

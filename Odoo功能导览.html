@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Odoo 制造系统功能导览（本地仓库版）</title>
+<style>
+  :root{
+    --brand:#DB2626; --brand-d:#BA1C1C; --gold:#C98A05; --ink:#171A1C;
+    --cream:#FAF5F5; --line:#e6dede; --green:#2e7d32; --blue:#1565c0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:#f5f1f1;line-height:1.7;}
+  .hero{background:linear-gradient(135deg,var(--brand),var(--brand-d));color:#fff;padding:54px 24px 46px;}
+  .hero h1{margin:0 0 10px;font-size:34px;font-weight:800;letter-spacing:.5px;}
+  .hero p{margin:0;max-width:880px;opacity:.95;font-size:15px;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px 70px;}
+  section{background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px 28px;margin:22px 0;
+          box-shadow:0 6px 22px rgba(23,26,28,.05);}
+  h2{font-size:22px;margin:0 0 14px;color:var(--brand-d);border-left:5px solid var(--gold);padding-left:12px;}
+  h3{font-size:17px;margin:22px 0 8px;color:var(--ink);}
+  p{margin:8px 0;}
+  .lead{font-size:15px;color:#3a3f42;}
+  .muted{color:#6b7176;font-size:13px;}
+  code,.tag{font-family:"SFMono-Regular",Consolas,Menlo,monospace;background:var(--cream);
+       border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:13px;color:var(--brand-d);}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px;margin-top:14px;}
+  .card{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:#fcfafa;
+        transition:.2s;position:relative;overflow:hidden;}
+  .card:hover{box-shadow:0 8px 20px rgba(219,38,38,.12);transform:translateY(-2px);}
+  .card .app{font-weight:800;font-size:16px;color:var(--brand);margin-bottom:4px;}
+  .card .dir{font-size:12px;color:var(--gold);font-family:monospace;margin-bottom:8px;}
+  .card ul{margin:6px 0 0;padding-left:18px;font-size:13.5px;}
+  .card li{margin:3px 0;}
+  table{border-collapse:collapse;width:100%;margin-top:14px;font-size:13.5px;}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top;}
+  th{background:var(--cream);color:var(--brand-d);font-weight:700;}
+  tr:nth-child(even) td{background:#fbf7f7;}
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:18px 0;}
+  .node{flex:1 1 130px;min-width:120px;background:var(--cream);border:1px solid var(--gold);
+        border-radius:12px;padding:12px;font-size:13px;text-align:center;}
+  .node b{display:block;color:var(--brand-d);margin-bottom:3px;}
+  .arrow{display:flex;align-items:center;color:var(--gold);font-size:20px;font-weight:800;}
+  .note{background:#fff8e1;border-left:4px solid var(--gold);padding:12px 16px;border-radius:8px;font-size:13.5px;margin:12px 0;}
+  .ok{color:var(--green);font-weight:700;}
+  .no{color:var(--brand);font-weight:700;}
+  .arch{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;}
+  .arch .box{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fcfafa;}
+  .arch .box h4{margin:0 0 6px;color:var(--blue);font-size:15px;}
+  footer{text-align:center;color:#8a9094;font-size:12.5px;padding:18px;}
+  .pill{display:inline-block;background:var(--brand);color:#fff;border-radius:999px;padding:2px 11px;font-size:12px;margin:2px;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Odoo 制造系统 · 功能与代码模块导览</h1>
+  <p>本页基于本地仓库 <code>/Users/ruixin/Desktop/demo演示/odoo制造</code>（Odoo 18.0 源码 + 社区制造模块，Docker 部署）编写，
+     结合 Odoo 官方应用理念，用通俗方式讲清「系统能做什么」以及「对应到哪段代码」。</p>
+</div>
+
+<div class="wrap">
+
+  <section>
+    <h2>一、一句话理解 Odoo</h2>
+    <p class="lead">把 Odoo 想象成<strong>乐高积木式的企业管理系统</strong>：它把所有业务部门（销售、采购、仓库、生产、财务…）
+       做成一个个独立的「应用模块」，所有模块<strong>共用同一个数据库、同一套用户和同一套界面</strong>。
+       在 A 模块里下的销售单，会自动在 B 模块生成要生产的任务、在 C 模块扣减库存、在 D 模块出账单——数据天然打通，不用人工搬运。</p>
+    <p class="muted">本仓库是「以制造（MRP）为核心」的演示环境：默认重点启用 制造、库存、采购、销售、产品、会计 等模块，
+       并已安装 <span class="ok">CRM（客户关系）</span> 模块；通过只读的 <code>odoo_mcp_server</code> 把制造/库存/CRM 数据桥接给 AI 助手查询。</p>
+  </section>
+
+  <section>
+    <h2>二、本系统部署概况</h2>
+    <ul>
+      <li><b>技术栈：</b>Odoo 18.0（Python + PostgreSQL + 自研 Web 框架），源码即仓库本体。</li>
+      <li><b>运行方式：</b><code>docker-compose up -d</code> 启动 Odoo + PostgreSQL 两个容器，仓库根目录挂载进容器 <code>/odoo</code>。</li>
+      <li><b>访问地址：</b>Web 后台 <code>127.0.0.1:8069</code>（仅本机）；数据库 PostgreSQL <code>127.0.0.1:5432</code>（库/用户 <code>odoo/odoo</code>）。</li>
+      <li><b>管理员：</b>账号 <code>admin</code>，口令 <code>admin</code>。</li>
+      <li><b>AI 桥接：</b><code>odoo_mcp_server/</code> 是一个独立的 stdio MCP 服务，通过 XML-RPC 只读访问 <code>127.0.0.1:8069</code>，
+          让 WorkBuddy/CodeBuddy 能直接查询制造与库存数据。</li>
+    </ul>
+    <div class="note">提示：源码里 <code>addons/</code> 是业务模块（社区版），<code>odoo/</code> 是底层框架（ORM、HTTP、服务进程等）。
+       改业务功能通常只在 <code>addons/</code> 下对应模块里动手。</div>
+  </section>
+
+  <section>
+    <h2>三、功能全景 → 代码模块映射</h2>
+    <p class="lead">下表把「业务功能」对应到本仓库实际存在的 Odoo 模块目录与核心数据模型（模型名即代码里 <code>_name</code> 的值，
+       可在对应 <code>models/*.py</code> 中找到）。</p>
+    <table>
+      <thead>
+        <tr><th>业务功能</th><th>Odoo 应用</th><th>本地模块目录</th><th>核心模型（_name）</th><th>关键代码文件</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>产品与价格</td><td>Products</td><td><code>addons/product</code></td>
+            <td>product.template、product.product、product.category、product.pricelist</td>
+            <td>models/product.py、models/product_pricelist.py</td></tr>
+        <tr><td>库存 / 仓储</td><td>Inventory</td><td><code>addons/stock</code></td>
+            <td>stock.move、stock.picking、stock.quant、stock.location、stock.warehouse、stock.rule、stock.lot</td>
+            <td>models/stock_move.py、stock_quant.py、stock_warehouse.py</td></tr>
+        <tr><td>采购</td><td>Purchase</td><td><code>addons/purchase</code></td>
+            <td>purchase.order、purchase.order.line</td>
+            <td>models/purchase.py</td></tr>
+        <tr><td>销售</td><td>Sales</td><td><code>addons/sale</code></td>
+            <td>sale.order、sale.order.line</td>
+            <td>models/sale_order.py</td></tr>
+        <tr><td><b>客户关系（CRM）</b></td><td><b>CRM</b></td><td><code>addons/crm</code></td>
+            <td>crm.lead（线索/商机合一，靠 type 区分）、crm.stage、crm.team</td>
+            <td>models/crm_lead.py、crm_stage.py、crm_team.py</td></tr>
+        <tr><td><b>制造（核心）</b></td><td><b>Manufacturing</b></td><td><code>addons/mrp</code></td>
+            <td>mrp.bom、mrp.production、mrp.routing、mrp.workorder、mrp.workcenter、mrp.unbuild</td>
+            <td>models/mrp_bom.py、mrp_production.py、mrp_workorder.py</td></tr>
+        <tr><td>委外制造</td><td>MRP Subcontracting</td><td><code>addons/mrp_subcontracting</code></td>
+            <td>扩展 mrp.production、stock.picking（委外收货）</td>
+            <td>models/、views/mrp_production_views.xml</td></tr>
+        <tr><td>维修 / 退修</td><td>Repairs</td><td><code>addons/mrp_repair</code> + <code>addons/repair</code></td>
+            <td>repair.order</td>
+            <td>repair/models/repair.py、mrp_repair/views/repair_views.xml</td></tr>
+        <tr><td>制造成本核算</td><td>MRP Account</td><td><code>addons/mrp_account</code></td>
+            <td>把 mrp.production 与库存估值、account.move 关联（在制品价值）</td>
+            <td>models/（生产完工结转存货成本）</td></tr>
+        <tr><td>会计 / 开票</td><td>Invoicing（account）</td><td><code>addons/account</code></td>
+            <td>account.move、account.payment、account.journal</td>
+            <td>models/account_move.py</td></tr>
+        <tr><td>联系人 / 合作伙伴</td><td>Contacts（base）</td><td><code>addons/base</code></td>
+            <td>res.partner、res.company</td>
+            <td>odoo/addons/base/models/res_partner.py</td></tr>
+        <tr><td>条码作业</td><td>Barcodes</td><td><code>addons/barcodes</code></td>
+            <td>条码操作界面与扫码入库/拣货/盘点</td>
+            <td>models/、static/src/</td></tr>
+        <tr><td>质量检验</td><td>Quality</td><td><span class="no">本仓库未包含</span></td>
+            <td>—（属 Odoo Enterprise 企业版模块）</td>
+            <td>—</td></tr>
+      </tbody>
+    </table>
+    <p class="muted">本演示已安装并接入：<span class="ok">CRM（crm，已安装，39 条线索/商机数据）</span>。
+       系统中还预置了大量其它 Odoo 社区模块（如 Project、HR、Point of Sale、Website、eCommerce 等），
+       可在 <code>addons/</code> 目录下按模块名查看；它们与本制造演示并非强相关，按需启用。</p>
+  </section>
+
+  <section>
+    <h2>四、制造模块（MRP）深度映射</h2>
+    <p class="lead"><code>addons/mrp</code> 是这套演示的心脏，依赖 <code>product</code>、<code>stock</code>、<code>resource</code>。
+       它把「怎么造、造什么、在哪造、造多少」全部用数据模型表达，并复用库存模块完成物料的进出。</p>
+
+    <h3>1. 核心模型与代码文件</h3>
+    <div class="grid">
+      <div class="card"><div class="app">mrp.bom</div><div class="dir">addons/mrp/models/mrp_bom.py</div>
+        <ul><li>物料清单：成品由哪些组件、多少用量构成</li><li>支持多级 BOM、按工序/工位分配</li></ul></div>
+      <div class="card"><div class="app">mrp.production</div><div class="dir">addons/mrp/models/mrp_production.py</div>
+        <ul><li>制造订单：一次具体生产任务</li><li>状态机：草稿→确认→进行中→完成/取消</li></ul></div>
+      <div class="card"><div class="app">mrp.routing / workcenter</div><div class="dir">models/mrp_routing.py、mrp_workcenter.py</div>
+        <ul><li>工艺路线：生产要经过哪些工位</li><li>workcenter：车间里的机器/人工资源</li></ul></div>
+      <div class="card"><div class="app">mrp.workorder</div><div class="dir">addons/mrp/models/mrp_workorder.py</div>
+        <ul><li>工单：在某个工位上执行的具体工序</li><li>记录实际工时、产量、质检</li></ul></div>
+      <div class="card"><div class="app">mrp.unbuild</div><div class="dir">addons/mrp/models/mrp_unbuild.py</div>
+        <ul><li>拆卸单：把成品拆回组件（逆向生产）</li></ul></div>
+      <div class="card"><div class="app">复用库存模型</div><div class="dir">models/stock_move.py、stock_quant.py…</div>
+        <ul><li>组件消耗 = stock.move 出库</li><li>成品入库 = stock.quant 增加</li></ul></div>
+    </div>
+
+    <h3>2. 一张制造订单的生命周期（数据如何流动）</h3>
+    <div class="flow">
+      <div class="node"><b>销售/预测</b>需求来源<br>sale.order / 补货规则</div>
+      <div class="arrow">→</div>
+      <div class="node"><b>补货规则</b>stock.rule<br>决定「自制」</div>
+      <div class="arrow">→</div>
+      <div class="node"><b>制造订单</b>mrp.production<br>读取 BOM</div>
+      <div class="arrow">→</div>
+      <div class="node"><b>工单</b>mrp.workorder<br>工位上执行</div>
+      <div class="arrow">→</div>
+      <div class="node"><b>组件消耗</b>stock.move<br>库存扣减</div>
+      <div class="arrow">→</div>
+      <div class="node"><b>成品入库</b>stock.quant<br>可用库存+</div>
+    </div>
+    <p class="muted">分支：若启用 <code>mrp_subcontracting</code>，部分工序会生成发给供应商的 <code>stock.picking</code> 委外收货单；
+       若启用 <code>mrp_account</code>，完工时同步生成存货估值分录（account.move）。</p>
+  </section>
+
+  <section>
+    <h2>五、代码与运行架构（看懂目录就能上手）</h2>
+    <div class="arch">
+      <div class="box"><h4>框架层 odoo/</h4>
+        <p>所有模块共用的「地基」：<br>
+        <code>odoo/models.py</code> 模型基类<br><code>odoo/api.py</code> ORM 装饰器<br>
+        <code>odoo/fields.py</code> 字段类型<br><code>odoo/http.py</code> 路由与 RPC<br>
+        <code>odoo/service/</code> 服务进程<br><code>odoo/modules/</code> 模块加载</p></div>
+      <div class="box"><h4>业务层 addons/</h4>
+        <p>一个个独立应用，每个目录一个模块：<br>
+        <code>__manifest__.py</code> 声明依赖与菜单<br><code>models/</code> 数据模型<br>
+        <code>views/*.xml</code> 界面<br><code>security/</code> 权限<br>
+        <code>data/*.xml</code> 初始数据<br><code>tests/</code> 测试</p></div>
+      <div class="box"><h4>对外接口</h4>
+        <p>Web 后台 <code>/web</code>；<br>JSON-RPC <code>/jsonrpc</code>；<br>
+        XML-RPC <code>/xmlrpc/2/object</code>（execute_kw）；<br>
+        HTTP 控制器 <code>@http.route</code>。</p></div>
+      <div class="box"><h4>AI 集成层</h4>
+        <p><code>odoo_mcp_server/</code> 独立 Python 包，<br>
+        stdio MCP 服务，<br>只读调用 XML-RPC 查询 MRP/库存/<span class="ok">CRM</span> 等模型，<br>与 Odoo 本体解耦。</p>
+        <p class="muted" style="margin-top:8px">新增 CRM 专属工具：<code>list_leads</code>、<code>get_lead</code>、
+        <code>list_opportunities</code>、<code>create_lead</code>（写操作需关闭只读）。通用工具 <code>odoo_search_read</code> 等可查任意 CRM 模型。</p></div>
+    </div>
+    <div class="note">想改某个功能？先在本页「功能映射表」找到模块目录，再到该目录下 <code>models/</code> 改逻辑、<code>views/*.xml</code> 改界面、
+       <code>security/ir.model.access.csv</code> 配权限，最后 <code>docker compose exec odoo python odoo-bin -u &lt;模块&gt; --stop-after-init</code> 生效。</div>
+  </section>
+
+  <section>
+    <h2>六、常用探索命令</h2>
+    <p><span class="pill">启动</span> <code>docker-compose up -d</code></p>
+    <p><span class="pill">日志</span> <code>docker-compose logs -f odoo</code></p>
+    <p><span class="pill">更新模块</span> <code>docker compose exec odoo python odoo-bin -c /etc/odoo/odoo.conf -d odoo -u mrp --stop-after-init</code></p>
+    <p><span class="pill">交互 Shell</span> <code>docker compose exec odoo python odoo-bin shell -c /etc/odoo/odoo.conf -d odoo</code></p>
+    <p class="muted">更完整命令见仓库根目录 <code>CODEBUDDY.md</code>。</p>
+  </section>
+
+  <footer>本导览由 CodeBuddy 基于本地 Odoo 18.0 制造仓库自动生成 · 重点聚焦制造（MRP）及其上下游模块</footer>
+</div>
+
+</body>
+</html>
