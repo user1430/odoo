@@ -1,8 +1,16 @@
-"""MCP server exposing Odoo manufacturing operations to WorkBuddy (stdio)."""
+"""MCP server exposing Odoo manufacturing operations.
+
+传输方式由环境变量 MCP_TRANSPORT 决定：
+- stdio（默认）：本机子进程方式运行，供 WorkBuddy/CodeBuddy 本地接入；
+- streamable-http：对外提供 HTTP 端点（/mcp），可被云端 MCP 客户端调用；
+- sse：旧版 HTTP 传输（/sse + /messages/），兼容只支持 SSE 的客户端。
+"""
 from __future__ import annotations
 
 import logging
+import os
 import sys
+from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
@@ -235,13 +243,75 @@ def create_production_order(
     return client.create("mrp.production", vals)
 
 
+class _BearerAuthMiddleware:
+    """纯 ASGI 中间件：设置 MCP_AUTH_TOKEN 后，所有 HTTP 请求必须带
+    `Authorization: Bearer <token>`，否则返回 401。非 HTTP scope（如
+    lifespan）直接透传。"""
+
+    def __init__(self, app: Any, token: str) -> None:
+        self.app = app
+        self.token = token.encode("utf-8")
+
+    async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
+        if scope.get("type") != "http":
+            await self.app(scope, receive, send)
+            return
+        headers = dict(scope.get("headers") or [])
+        auth = headers.get(b"authorization", b"")
+        if auth != b"Bearer " + self.token:
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 401,
+                    "headers": [(b"content-type", b"application/json")],
+                }
+            )
+            await send(
+                {"type": "http.response.body", "body": b'{"error": "unauthorized"}'}
+            )
+            return
+        await self.app(scope, receive, send)
+
+
+def _resolve_transport() -> str:
+    raw = os.environ.get("MCP_TRANSPORT", "stdio").strip().lower()
+    return {"http": "streamable-http", "streamable_http": "streamable-http"}.get(
+        raw, raw
+    )
+
+
+def _run_http(transport: str) -> None:
+    import uvicorn
+
+    host = os.environ.get("MCP_HOST", "127.0.0.1")
+    port = int(os.environ.get("MCP_PORT", "8080"))
+    token = os.environ.get("MCP_AUTH_TOKEN", "").strip()
+
+    app = mcp.sse_app() if transport == "sse" else mcp.streamable_http_app()
+    if token:
+        app = _BearerAuthMiddleware(app, token)  # type: ignore[assignment]
+
+    logging.getLogger("odoo_mcp").info(
+        "MCP server listening on http://%s:%s (transport=%s, auth=%s)",
+        host,
+        port,
+        transport,
+        "bearer-token" if token else "none(内网使用)",
+    )
+    uvicorn.run(app, host=host, port=port, log_level="info")
+
+
 def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
         stream=sys.stderr,
         format="%(asctime)s %(levelname)s odoo_mcp: %(message)s",
     )
-    mcp.run()
+    transport = _resolve_transport()
+    if transport in ("sse", "streamable-http"):
+        _run_http(transport)
+        return
+    mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":

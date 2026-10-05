@@ -5,9 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "odoo-mcp-server"
 version = "0.1.0"
-description = "MCP server bridging WorkBuddy to an Odoo manufacturing instance over XML-RPC (stdio)"
+description = "MCP server bridging WorkBuddy to an Odoo manufacturing instance over XML-RPC (stdio / streamable-http / SSE)"
 requires-python = ">=3.10"
-dependencies = ["mcp>=1.2.0"]
+dependencies = [
+    "mcp>=1.8.0,<2.0",
+    "uvicorn>=0.23.1",
+]
 
 [project.scripts]
 odoo-mcp-server = "odoo_mcp_server.server:main"
