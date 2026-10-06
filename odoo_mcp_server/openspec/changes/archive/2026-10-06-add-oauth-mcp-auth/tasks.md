@@ -33,4 +33,4 @@
 - [x] 5.2 部署新版 + `MCP_AUTH_MODE=both`（drop-in `/etc/systemd/system/odoo-mcp.service.d/override.conf`，未动 MCP_AUTH_TOKEN），重启日志 `auth mode=both`；静态回归：错 token 401 / 对 token initialize+odoo_ping=18.0 ✅
 - [x] 5.3 OAuth 链路实测（经 `-L 18080` 转发）：client_credentials+openid token → initialize+odoo_ping 放行（pos-hit）；伪造 token 401 且 60s 内复求 `cache=neg-hit`；journalctl 仅 sha256[:8]，原文 0 次 ✅
 - [x] 5.4 **回滚演练**：快照解回 + unit 还原 + 删 drop-in → 静态 200 / OAuth 401（旧码行为确认）→ 重新部署（md5 一致）→ 双链路复测全绿 ✅（证明快照真能用）
-- [ ] 5.5 观察期后择期开 `remove-static-token` 提案（不在本 change）
+- [x] 5.5 观察期后择期开 `remove-static-token` 提案（不在本 change）→ 已于 2026-10-06 开提案 `openspec/changes/remove-static-token/`（依据：连接器已切 OAuth + 7 天 static allow=0），实施待用户确认
