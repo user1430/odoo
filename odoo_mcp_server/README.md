@@ -41,7 +41,15 @@ pip install -e .
 | `MCP_TRANSPORT` | 传输方式：`stdio` / `streamable-http` / `sse` | `stdio` |
 | `MCP_HOST` | HTTP 模式监听地址（对外部署改 `0.0.0.0`） | `127.0.0.1` |
 | `MCP_PORT` | HTTP 模式监听端口 | `8080` |
-| `MCP_AUTH_TOKEN` | 设置后 HTTP 请求需带 `Authorization: Bearer <token>` | 空（不鉴权） |
+| `MCP_AUTH_MODE` | HTTP 鉴权模式：`static`（仅静态 Token）/ `oauth`（仅 OAuth）/ `both`（先静态后 OAuth） | `both` |
+| `MCP_AUTH_TOKEN` | 静态 Token；mode 含 `static` 时请求需带 `Authorization: Bearer <token>` | 空（static 路径永不匹配，fail-closed） |
+| `OAUTH_USERINFO_ENDPOINT` | OAuth userinfo 校验端点（GET，200=有效，401=无效） | `https://copilot.tencent.com/oauth2/userinfo` |
+| `OAUTH_TOKEN_CACHE_TTL` | OAuth 校验正缓存 TTL（秒）；负缓存固定 60s | `300` |
+
+> OAuth 校验说明：`oauth`/`both` 模式下，MCP Server 以请求 Bearer token 调 userinfo
+> 端点在线校验；校验结果带缓存（正缓存 TTL 见上，负缓存 60s）；userinfo 不可达时，
+> 无缓存 token 返回 503 `auth_unavailable`，有未过期正缓存放行。日志仅记录
+> sha256(token) 前 8 位，绝不记录 token 原文。回滚：`MCP_AUTH_MODE=static` 重启即恢复改造前行为。
 
 > 安全：不要把 `odoo.conf` 里的 `admin_passwd` 当作业务账号密码；为 MCP 创建一个
 > 仅具备所需模型读/写权限的 Odoo 用户，并优先保持 `ODOO_READONLY=true`。
