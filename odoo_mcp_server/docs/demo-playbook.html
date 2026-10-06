@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Odoo MCP 连接器 · 演示重启与开发教学手册</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#DB2626; --red-dark:#BA1C1C; --gold:#C98A05; --gold-light:#FABF24;
+  --cream:#FAF5F5; --paper:#FFFDFB; --ink:#171A1C; --ink-soft:#4A4F54; --line:#E5DCD6;
+  --green:#1E7B4F;
+  --radius-m:16px; --radius-l:24px;
+  --serif:'Noto Serif SC',serif; --sans:'Noto Sans SC',sans-serif; --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--cream);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.85;
+  background-image:radial-gradient(circle at 1px 1px, rgba(23,26,28,.05) 1px, transparent 0);background-size:28px 28px}
+::selection{background:var(--gold-light);color:var(--ink)}
+
+.layout{display:grid;grid-template-columns:260px 1fr;max-width:1280px;margin:0 auto}
+@media(max-width:960px){.layout{grid-template-columns:1fr}.sidenav{display:none}}
+
+/* ===== 侧边导航 ===== */
+.sidenav{position:sticky;top:0;height:100vh;padding:48px 24px 24px 32px;overflow:auto;border-right:1px solid var(--line)}
+.sidenav .brand{font-family:var(--serif);font-weight:900;font-size:15px;letter-spacing:.08em;color:var(--red);margin-bottom:6px}
+.sidenav .sub{font-size:12px;color:var(--ink-soft);margin-bottom:28px}
+.sidenav a{display:flex;gap:10px;align-items:baseline;padding:8px 10px;border-radius:10px;color:var(--ink-soft);text-decoration:none;font-size:14px;transition:all .2s}
+.sidenav a:hover{background:#fff;color:var(--red);transform:translateX(3px)}
+.sidenav a .no{font-family:var(--mono);font-size:11px;color:var(--gold);font-weight:600;min-width:22px}
+.sidenav .foot{margin-top:32px;padding-top:16px;border-top:1px dashed var(--line);font-size:11px;color:var(--ink-soft)}
+
+.main{padding:0 56px 120px;max-width:940px}
+@media(max-width:960px){.main{padding:0 22px 80px}}
+
+/* ===== Hero ===== */
+.hero{padding:88px 0 56px;border-bottom:3px double var(--line);position:relative}
+.hero .kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--red);border:1px solid var(--red);border-radius:999px;padding:5px 16px;margin-bottom:26px;background:#fff}
+.hero .kicker::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--red);animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.25}}
+.hero h1{font-family:var(--serif);font-weight:900;font-size:clamp(30px,4.6vw,52px);line-height:1.28;letter-spacing:.01em}
+.hero h1 em{font-style:normal;color:var(--red);position:relative}
+.hero h1 em::after{content:'';position:absolute;left:0;right:0;bottom:6px;height:10px;background:linear-gradient(90deg,rgba(250,191,36,.55),rgba(250,191,36,.15));z-index:-1}
+.hero .lede{margin-top:22px;font-size:17px;color:var(--ink-soft);max-width:660px}
+.hero .meta{margin-top:30px;display:flex;flex-wrap:wrap;gap:10px}
+.hero .meta span{font-size:12.5px;font-family:var(--mono);background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 12px;color:var(--ink-soft)}
+.hero .stamp{position:absolute;top:64px;right:0;width:96px;height:96px;border:3px solid var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;transform:rotate(12deg);color:var(--red);font-family:var(--serif);font-weight:900;font-size:17px;text-align:center;line-height:1.3;opacity:.85;background:rgba(255,255,255,.6)}
+@media(max-width:960px){.hero .stamp{display:none}}
+
+/* ===== 章节 ===== */
+section.chapter{margin-top:84px;scroll-margin-top:24px}
+.chap-head{display:flex;align-items:baseline;gap:18px;border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:34px}
+.chap-head .num{font-family:var(--mono);font-size:13px;font-weight:600;color:#fff;background:var(--red);border-radius:8px;padding:4px 10px;letter-spacing:.05em}
+.chap-head h2{font-family:var(--serif);font-weight:900;font-size:clamp(22px,3vw,30px)}
+.chap-head .en{margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--ink-soft);text-transform:uppercase}
+@media(max-width:640px){.chap-head .en{display:none}}
+h3{font-family:var(--serif);font-weight:700;font-size:20px;margin:42px 0 14px;display:flex;align-items:center;gap:10px}
+h3::before{content:'';width:10px;height:10px;background:var(--gold);border-radius:2px;flex:none}
+h4{font-size:16px;font-weight:700;margin:26px 0 8px}
+p{margin:10px 0;color:#2A2E33}
+strong{color:var(--ink)}
+ul,ol{margin:10px 0 10px 22px}
+li{margin:6px 0}
+a{color:var(--red-dark)}
+code{font-family:var(--mono);font-size:.86em;background:#F3ECE6;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:var(--red-dark)}
+
+/* ===== 类比卡 ===== */
+.analogy{background:linear-gradient(135deg,#FFF8E8,#FFF3D6);border:1.5px solid var(--gold);border-radius:var(--radius-m);padding:20px 24px;margin:22px 0;position:relative}
+.analogy .tag{position:absolute;top:-13px;left:20px;background:var(--gold);color:#fff;font-size:12px;font-weight:700;letter-spacing:.15em;border-radius:999px;padding:3px 14px}
+.analogy p{margin:4px 0;color:#5A4A1E}
+.analogy .big{font-family:var(--serif);font-weight:700;font-size:17px;color:var(--ink)}
+
+/* ===== 架构图 ===== */
+.arch{background:var(--ink);border-radius:var(--radius-l);padding:34px 30px;margin:26px 0;color:#EDE7DF;font-family:var(--mono);font-size:13px;line-height:1.9;overflow-x:auto;white-space:pre;box-shadow:0 18px 40px -18px rgba(23,26,28,.45)}
+.arch .c1{color:var(--gold-light)} .arch .c2{color:#7FD1A0} .arch .c3{color:#8FB8FF} .arch .c4{color:#FF9C9C}
+
+/* ===== 步骤 ===== */
+.step{display:grid;grid-template-columns:46px 1fr;gap:18px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-m);padding:24px 26px;margin:16px 0;box-shadow:0 2px 0 var(--line)}
+.step .badge{width:46px;height:46px;border-radius:50%;background:var(--ink);color:#fff;font-family:var(--mono);font-weight:600;font-size:15px;display:flex;align-items:center;justify-content:center}
+.step h4{margin:2px 0 6px;font-size:17px}
+.step .why{font-size:13.5px;color:var(--ink-soft);background:#F7F1EA;border-left:3px solid var(--gold);padding:8px 14px;border-radius:0 8px 8px 0;margin-top:10px}
+
+/* ===== 代码块 ===== */
+pre{background:#21252B;color:#D8DEE9;border-radius:14px;padding:20px 24px;margin:14px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.8;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+pre .cm{color:#7A8494} pre .ok{color:#7FD1A0}
+
+/* ===== 提示词卡 ===== */
+.prompt-card{position:relative;background:var(--ink);border-radius:var(--radius-m);padding:26px 28px 20px;margin:18px 0;box-shadow:0 14px 34px -16px rgba(23,26,28,.5)}
+.prompt-card .plabel{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--gold-light);border:1px solid rgba(250,191,36,.5);border-radius:999px;padding:3px 12px;margin-bottom:14px}
+.prompt-card pre{background:rgba(255,255,255,.05);box-shadow:none;white-space:pre-wrap;word-break:break-word;color:#EDE7DF;font-size:13.5px;margin:0;border:1px dashed rgba(255,255,255,.15)}
+.copy-btn{position:absolute;top:16px;right:16px;background:var(--gold);border:none;color:var(--ink);font-family:var(--mono);font-size:12px;font-weight:600;border-radius:8px;padding:6px 14px;cursor:pointer;transition:background .2s}
+.copy-btn:hover{background:var(--gold-light)}
+
+/* ===== 前置授权标记 ===== */
+.prereq{background:#FDF6EC;border:1.5px dashed var(--gold);border-radius:var(--radius-m);padding:16px 22px;margin:14px 0;font-size:14px}
+.prereq b{color:var(--gold);font-family:var(--mono);font-size:12px;letter-spacing:.12em;display:block;margin-bottom:6px}
+.prereq ul{margin:4px 0 4px 18px}
+.prereq li{margin:5px 0;color:#5A4A1E}
+
+/* ===== 检查清单 ===== */
+.checklist{list-style:none;margin:14px 0}
+.checklist li{display:flex;gap:14px;align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:13px 18px;margin:8px 0}
+.checklist li::before{content:'';flex:none;width:20px;height:20px;margin-top:3px;border:2.5px solid var(--red);border-radius:6px;background:#fff}
+.checklist li b{font-weight:700}
+.checklist li small{display:block;color:var(--ink-soft);font-size:13px}
+
+/* ===== 坑卡 ===== */
+.pit{background:var(--paper);border:1px solid var(--line);border-left:5px solid var(--red);border-radius:0 var(--radius-m) var(--radius-m) 0;padding:20px 24px;margin:16px 0;position:relative;transition:transform .2s, box-shadow .2s}
+.pit:hover{transform:translateY(-2px);box-shadow:0 10px 24px -12px rgba(219,38,38,.3)}
+.pit h4{margin:0 0 6px;font-size:16.5px;padding-right:150px}
+.pit .badges{position:absolute;top:18px;right:18px;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.freq{font-family:var(--mono);font-size:11px;padding:3px 12px;border-radius:999px;font-weight:600;white-space:nowrap}
+.freq.hi{background:var(--red);color:#fff}
+.freq.mid{background:var(--gold);color:#fff}
+.pit .symptom{font-size:13.5px;color:var(--ink-soft)}
+.pit .symptom b{color:var(--red-dark)}
+.pit .fix{margin-top:10px;font-size:14px;background:#F0FAF4;border:1px dashed var(--green);border-radius:10px;padding:10px 16px;color:#155A38}
+.pit .fix::before{content:'✔ 正解：';font-weight:700}
+
+/* ===== 对照线索 ===== */
+.xref{margin-top:10px;font-size:12.5px;font-family:var(--mono);background:#F2EEE9;border-radius:8px;padding:8px 14px;color:var(--ink-soft);line-height:1.9}
+.xref b{color:var(--red-dark);font-weight:600}
+.xref .k{color:var(--gold);font-weight:600}
+
+/* ===== 时间线 ===== */
+.timeline{position:relative;margin:30px 0 30px 8px;padding-left:34px;border-left:3px solid var(--ink)}
+.tl-item{position:relative;margin-bottom:36px}
+.tl-item::before{content:'';position:absolute;left:-46px;top:4px;width:22px;height:22px;border-radius:50%;background:var(--cream);border:4px solid var(--red)}
+.tl-item.gold::before{border-color:var(--gold)}
+.tl-item .when{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--red);font-weight:600}
+.tl-item h4{margin:4px 0 6px;font-size:17.5px;font-family:var(--serif);padding:0}
+.tl-item .motive{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:14px;color:var(--ink-soft)}
+.tl-item .motive b{color:var(--ink)}
+
+/* ===== 表格 ===== */
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;background:var(--paper);border-radius:12px;overflow:hidden;box-shadow:0 0 0 1px var(--line)}
+th{background:var(--ink);color:#fff;text-align:left;padding:11px 16px;font-weight:500;font-size:13px;letter-spacing:.05em}
+td{padding:11px 16px;border-top:1px solid var(--line);vertical-align:top}
+tr:nth-child(even) td{background:#FBF7F3}
+
+/* ===== 提示条 ===== */
+.callout{border-radius:var(--radius-m);padding:18px 24px;margin:22px 0;font-size:14.5px}
+.callout.warn{background:#FDF0EF;border:1.5px solid var(--red);color:#7A1A1A}
+.callout.info{background:#EFF5FF;border:1.5px solid #3B6FD4;color:#1E3E77}
+.callout.tip{background:#F0FAF4;border:1.5px solid var(--green);color:#155A38}
+.callout b{display:block;margin-bottom:4px;font-size:15px}
+
+/* ===== 演讲节拍 ===== */
+.beat{display:grid;grid-template-columns:88px 1fr;gap:16px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin:12px 0}
+.beat .t{font-family:var(--mono);font-weight:600;color:var(--gold);font-size:14px;padding-top:2px}
+.beat .do{font-size:14.5px}
+.beat .do b{font-family:var(--serif)}
+
+footer.end{margin-top:100px;border-top:3px double var(--line);padding-top:36px;text-align:center;color:var(--ink-soft);font-size:13px}
+footer.end .seal-line{font-family:var(--serif);font-weight:900;font-size:20px;color:var(--ink);margin-bottom:8px}
+.totop{display:inline-block;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--red);text-decoration:none;border:1px solid var(--red);border-radius:999px;padding:6px 18px}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ============ 侧边导航 ============ -->
+<nav class="sidenav">
+  <div class="brand">ODOO × MCP</div>
+  <div class="sub">连接器演示与教学手册<br>v1.1 · 2026-10-06</div>
+  <a href="#ch0"><span class="no">00</span>这份材料怎么用</a>
+  <a href="#ch1"><span class="no">01</span>五分钟看懂系统</a>
+  <a href="#ch2"><span class="no">02</span>重新启动演示</a>
+  <a href="#ch3"><span class="no">03</span>开发过程与思路</a>
+  <a href="#ch4"><span class="no">04</span>连接器开发教学</a>
+  <a href="#ch5"><span class="no">05</span>踩坑图鉴</a>
+  <a href="#ch6"><span class="no">06</span>演讲与录制建议</a>
+  <a href="#ch7"><span class="no">07</span>附录 · 速查</a>
+  <div class="foot">凭据安全提醒：本手册不含真实密钥<br>与服务器地址；私有信息见本地<br>deployment.md（勿外传）。</div>
+</nav>
+
+<!-- ============ 主内容 ============ -->
+<main class="main">
+
+<!-- ===== Hero ===== -->
+<header class="hero">
+  <span class="kicker">FIELD MANUAL · 实战手册</span>
+  <div class="stamp">演示<br>专用</div>
+  <h1>Odoo MCP 连接器<br><em>演示重启</em> 与 <em>开发教学</em> 手册</h1>
+  <p class="lede">项目暂停后如何用一条提示词恢复演示；以及如何向 IT 基础较薄弱的同学与渠道伙伴，把「企业连接器 + OAuth + MCP」讲清楚、讲实用、讲出坑。</p>
+  <div class="meta">
+    <span>受众：腾讯侧同学 · 渠道伙伴</span>
+    <span>演示入口：https://odoomcpdemo.duckdns.org/mcp</span>
+    <span>IdP：https://odoomcp.duckdns.org</span>
+    <span>云端：自备公网云服务器（清单见第 4 章）</span>
+  </div>
+</header>
+
+<!-- ============ 第 0 章 ============ -->
+<section class="chapter" id="ch0">
+  <div class="chap-head"><span class="num">00</span><h2>这份材料怎么用</h2><span class="en">How to use</span></div>
+  <table>
+    <tr><th style="width:200px">场景</th><th>直接读</th><th>目标</th></tr>
+    <tr><td><b>明天要重新演示</b></td><td>第 2 章</td><td>复制一条提示词给 CodeBuddy，自动拉起全链路</td></tr>
+    <tr><td><b>录制 / 演讲 demo</b></td><td>第 1、3、6 章</td><td>有类比、有故事线，且每段都能对照你的真实开发记录讲</td></tr>
+    <tr><td><b>教别人开发连接器</b></td><td>第 4、5 章</td><td>提示词化复现（AI 代跑，人做讲解）+ 高频避坑图鉴</td></tr>
+  </table>
+  <div class="callout tip"><b>给讲师的一句话</b>对 IT 基础薄弱的听众，<b>永远不要先讲术语</b>。先让他们看到「在 WorkBuddy 里问一句话，AI 直接查出 Odoo 里的生产订单」，再回头解释。本手册的原则是：<b>能让 AI 跑的绝不让学员手敲</b>——手敲错了他们不知道怎么办，AI 跑错了会自己修。</div>
+  <div class="callout info"><b>关于服务器信息的说明</b>本手册 intentionally 不出现演示云服务器的地址与归属——那是讲师自己的机器。<b>任何想复刻这套环境的团队，都需要自备一台具备公网入口的云服务器</b>，所需资源清单见第 4 章开头。讲师自己的私有部署细节保存在本地 <code>docs/deployment.md</code>（不随材料分发）。</div>
+</section>
+
+<!-- ============ 第 1 章 ============ -->
+<section class="chapter" id="ch1">
+  <div class="chap-head"><span class="num">01</span><h2>五分钟看懂这套系统</h2><span class="en">The Big Picture</span></div>
+
+  <h3>这套东西到底解决了什么问题</h3>
+  <p><strong>一句话：让 AI 助手（WorkBuddy）安全地操作企业里的 Odoo 系统（查订单、查库存、查客户），而不需要把系统密码交给任何人。</strong></p>
+
+  <h3>四个角色（全部用微信生态打比方）</h3>
+  <div class="analogy">
+    <span class="tag">一句话说清</span>
+    <p class="big">整件事你每天在微信里都在做：第三方 App 让你「微信扫码授权登录」——你没把微信密码给它，但它能拿到你的昵称头像。把「你」换成「AI」，把「第三方 App」换成「WorkBuddy」，把「微信」换成「企业系统」，就是这个 demo。</p>
+  </div>
+  <table>
+    <tr><th style="width:190px">技术名词</th><th style="width:190px">微信生态里的对应物</th><th>干什么的</th></tr>
+    <tr><td><b>MCP 协议</b></td><td>小程序标准 API</td><td>微信小程序不管什么业务都用同一套 wx.* 接口；MCP 同理——AI 不管背后是 Odoo 还是别的系统，都用同一种方式调工具（本 demo 暴露 17 个工具）</td></tr>
+    <tr><td><b>企业连接器</b></td><td>企业微信后台「添加应用」</td><td>管理员在 WorkBuddy 企业后台登记一次「系统在哪、去哪授权」，之后全企业员工都能用</td></tr>
+    <tr><td><b>OAuth 授权</b></td><td>微信扫码授权登录</td><td>不把账号密码给第三方，只给一张<b>限时、限范围</b>的授权凭证（token）。人离职了、凭证泄露了，作废一张凭证就行</td></tr>
+    <tr><td><b>IdP 授权服务器</b></td><td>微信开放平台的授权服务</td><td>专门发凭证、验凭证的「认证中心」（本 demo 用开源 node-oidc-provider 自建，登录方式是手机号 + 模拟验证码）</td></tr>
+    <tr><td><b>odoo-mcp 资源服务器</b></td><td>App 自己的业务后台</td><td>真正干活的一方：收到请求先向认证中心核实凭证（introspection），有效才去 Odoo 取数</td></tr>
+  </table>
+  <p style="font-size:13.5px;color:var(--ink-soft)">只用「微信授权登录」这一个听众已有的心智模型，不再引入第二个类比场景——听众要记的新概念只有一个：<b>AI 也能走这套授权</b>。</p>
+
+  <h3>数据怎么流动</h3>
+  <div class="arch"><span class="c3">员工在 WorkBuddy 提问「查一下生产订单」</span>
+        │
+        ▼
+<span class="c1">企业连接器</span>（平台自动带 token，员工无感知）
+        │  HTTPS 443
+        ▼
+┌────────────── 云服务器（自备，公网入口） ──────────────┐
+│  <span class="c2">Caddy</span>（统一入口，自动 HTTPS 证书）                  │
+│    ├─ odoomcpdemo.duckdns.org → <span class="c4">odoo-mcp</span>           │
+│    └─ odoomcp.duckdns.org     → <span class="c4">odoo-idp</span>            │
+│                                                        │
+│  <span class="c4">odoo-mcp</span>：验凭证（问 IdP introspection）               │
+│      └─ 有效 → 经 SSH 隧道回讲师本机 Odoo 取数            │
+│  <span class="c4">odoo-idp</span>：发凭证 / 验凭证（认证中心）                  │
+└────────────────────────────────────────────────────────┘
+        │  SSH 反向隧道
+        ▼
+<span class="c1">讲师本机 Odoo 18</span>（demo 库，制造/CRM 演示数据）</div>
+
+  <div class="callout info"><b>为什么要画这张图给听众看</b>听众只需记住三个层次：<b>谁在用</b>（员工/AI）→ <b>谁在管权限</b>（连接器 + 认证中心）→ <b>谁在干活</b>（odoo-mcp + Odoo）。所有技术细节都挂在这三层上讲，不会迷路。</div>
+</section>
+
+<!-- ============ 第 2 章 ============ -->
+<section class="chapter" id="ch2">
+  <div class="chap-head"><span class="num">02</span><h2>重新启动演示（提示词一键拉起）</h2><span class="en">Restart Runbook</span></div>
+  <p>云端三个服务（odoo-mcp / odoo-idp / caddy）由 systemd 托管，<b>服务器不关机就一直活着</b>。要恢复的只有：<b>本机 Odoo</b>、<b>SSH 反向隧道</b>，外加确认云端健康。这些全部可以交给 CodeBuddy 做——<b>复制下面这条提示词，在本工作区（CodeBuddy）里直接发给它</b>：</p>
+
+  <div class="prompt-card">
+    <span class="plabel">PROMPT · 演示环境一键恢复</span>
+    <button class="copy-btn" onclick="copyPrompt('p-restart',this)">复制</button>
+<pre id="p-restart">帮我恢复 Odoo MCP 演示环境。按顺序执行，每步报告结果，任何一步失败先自行排查修复并说明原因，不要改动任何配置文件：
+
+1. 检查本机 Odoo 是否可访问（http://127.0.0.1:8069，demo 库）。若未运行：先确认 Rancher Desktop 已启动，再到 Odoo docker-compose 项目目录启动它，等待 Web 可访问。
+2. 执行 odoo_mcp_server/ssh-tunnel-start.sh 启动 SSH 反向隧道，并用 pgrep 确认进程存活。
+3. 检查云端三个服务 odoo-mcp、odoo-idp、caddy 均为 active (running)，不是则 restart。
+4. 三项自检：
+   - curl -i https://odoomcpdemo.duckdns.org/mcp 应返回 401 且带 WWW-Authenticate 头
+   - curl https://odoomcpdemo.duckdns.org/.well-known/oauth-protected-resource/mcp 应返回 200 JSON
+   - 在云端执行 curl -s http://127.0.0.1:7069/web/login 应返回 Odoo 登录页 HTML
+5. 全部通过后，输出一份「演示就绪报告」：各组件状态 + 我接下来在 WorkBuddy 里该点哪里。</pre>
+  </div>
+
+  <div class="prereq">
+    <b>⚑ 需要一次性配置 / 授权的步骤（仅这两处）</b>
+    <ul>
+      <li><b>第 1、2 步</b>：本机已安装 Rancher Desktop、Odoo compose 项目在本机磁盘——装一次，之后提示词即可驱动；另需在 <code>~/.zshrc</code> 加一行 <code>export ODOO_DEMO_SERVER=&lt;你的服务器地址&gt;</code>（隧道脚本从该变量读地址，一次性）。WorkBuddy 侧若无本地终端权限，前两步请在 CodeBuddy 里跑。</li>
+      <li><b>第 3、4 步（云端操作）</b>：二选一 —— ① CodeBuddy 的 <b>Lighthouse 集成</b>（execute_command，首次使用需登录授权，之后agent 可直接在服务器上执行命令）；② 本机 <code>~/.ssh</code> 已配好免密登录云服务器的密钥。其余所有步骤（本机进程、隧道、公网 curl）无需任何特殊授权。</li>
+    </ul>
+  </div>
+
+  <h3>提示词背后发生了什么（你心里有数即可）</h3>
+  <table>
+    <tr><th style="width:130px">提示词步骤</th><th>实际动作</th><th style="width:280px">为什么必须按这个顺序</th></tr>
+    <tr><td>1. Odoo</td><td>docker-compose 起 Odoo 18（demo 库，admin/admin）</td><td>它是数据源。数据源没起，后面全通也只是「门开了、仓库是空的」</td></tr>
+    <tr><td>2. 反向隧道</td><td>云端 7069 → 本机 8069（密钥 <code>~/.ssh/odoo_tunnel_ed25519</code>）</td><td>云端 odoo-mcp 与本机 Odoo 之间唯一的桥；办公网已放行 22 端口</td></tr>
+    <tr><td>3. 云端服务</td><td>systemctl status / restart</td><td>正常开机自启，这步只是确认，30 秒挡住 80% 现场翻车</td></tr>
+    <tr><td>4. 自检</td><td>三发 curl</td><td>分别验证三层：门（MCP 入口）、路标（OAuth 发现）、桥（数据隧道）</td></tr>
+  </table>
+
+  <h3>演示前 10 分钟人工检查表</h3>
+  <ul class="checklist">
+    <li><div><b>提示词跑完且「演示就绪报告」全绿</b><small>任何黄灯都先解决，别带病上场</small></div></li>
+    <li><div><b>WorkBuddy 里实测一次</b><small>连接器 enterprise_ruixin_test_demo 调 odoo_ping 返回 connected；再自然语言问一句「查一下生产订单列表」——观众只认这一步</small></div></li>
+    <li><div><b>授权登录链路演练一次</b><small>手机号 + 模拟验证码（验证码直接回显在登录页，纯演示不代表真实身份）</small></div></li>
+    <li><div><b>开一个无痕窗口备用</b><small>授权页若反复回弹，九成是浏览器 cookie 卡死（第 5 章 3 号坑），无痕立刻恢复</small></div></li>
+    <li><div><b>网络兜底</b><small>办公网封 8080 出方向；演示走公网 443 不受影响。网络不稳时手机热点兜底</small></div></li>
+  </ul>
+
+  <h3>现场翻车的三个典型症状与急救</h3>
+  <table>
+    <tr><th style="width:220px">症状</th><th style="width:190px">最可能原因</th><th>急救</th></tr>
+    <tr><td>连接器握手成功，但调 Odoo 工具报错</td><td>反向隧道断了</td><td>让 CodeBuddy 重跑隧道脚本（鉴权不受影响，观众几乎无感知）</td></tr>
+    <tr><td>连接器直接 401 / 授权失败</td><td>odoo-idp 挂了</td><td>云端 restart odoo-idp 并查 journalctl -u odoo-idp</td></tr>
+    <tr><td>授权登录页点了没反应、反复回弹</td><td>浏览器 cookie 卡死</td><td><b>换无痕窗口</b>，立刻恢复</td></tr>
+  </table>
+
+  <div class="callout warn"><b>两条遗留事项（不影响演示，择机处理）</b>① 云服务器防火墙里 8080 端口的死规则需在控制台手动删除（服务已绑 127.0.0.1，公网本不可达）；② 两侧仓库代码尚未 push 到远端，仅有本地提交。</div>
+</section>
+
+<!-- ============ 第 3 章 ============ -->
+<section class="chapter" id="ch3">
+  <div class="chap-head"><span class="num">03</span><h2>开发过程与思路（含对话记录对照）</h2><span class="en">The Story</span></div>
+  <p>两天（2026-10-05 ～ 10-06），从「一把万能钥匙」演进到「标准授权制度」。<b>每个阶段都给了「对照线索」：回你的 CodeBuddy 对话记录里搜关键词，就能看到当时真实的排查过程</b>——讲到哪段不确定，现场搜给听众看，比任何转述都有说服力。</p>
+
+  <div class="timeline">
+    <div class="tl-item">
+      <span class="when">起点 · DAY 1 上午</span>
+      <h4>静态 Token 版：能跑，但像一把永不换的万能钥匙</h4>
+      <div class="motive"><b>问题驱动：</b>最初所有客户端共用同一个写死的 Bearer Token。谁拿到谁就是"管理员"，泄露无法收场，离职无法回收，审计无法区分人。<b>企业场景下这不可接受</b>——这就是整个改造的动机。</div>
+      <div class="xref"><span class="k">对话检索词</span> 「静态 token」「MCP_AUTH_TOKEN」 · <span class="k">OpenSpec</span>（基线，无提案） · <span class="k">Commit</span> odoo 基线 38daf0c</div>
+    </div>
+    <div class="tl-item">
+      <span class="when">Change① · DAY 1</span>
+      <h4>打通平台 OAuth：先证明"标准授权码流程"走得通</h4>
+      <div class="motive"><b>思路：</b>先不改任何服务器代码，用一个最小客户端（codebuddyOauth）把「登录 → 授权 → 拿 token」全流程跑通。<b>先验证链路，再动生产代码</b>，把风险隔离在沙盒里。这一天连踩三坑（错端点、localhost 被拒、cookie 卡死），对应第 5 章 1～3 号坑。</div>
+      <div class="xref"><span class="k">对话检索词</span> 「账号不存在」「redirect_uri 参数错误」「localhost」 · <span class="k">OpenSpec</span> fix-oauth-endpoints · <span class="k">Commit</span> codebuddyOauth 4153223 起</div>
+    </div>
+    <div class="tl-item">
+      <span class="when">Change② · DAY 2 上午</span>
+      <h4>给 MCP 服务器装上"验凭证闸机"</h4>
+      <div class="motive"><b>思路：</b>在 odoo-mcp 前加鉴权中间件：收到请求先问 IdP「这张凭证有效吗」（userinfo/introspection），有效才放行，带正负缓存避免每次出网。<b>灰度策略：</b>静态与 OAuth 双通道并存（mode=both），旧客户端零影响，新链路慢慢切。</div>
+      <div class="xref"><span class="k">对话检索词</span> 「auth mode=both」「scope=openid」「正负缓存」 · <span class="k">OpenSpec</span> add-oauth-mcp-auth · <span class="k">Commit</span> odoo d3f8840 → 1197c73；codebuddyOauth 8068c3f</div>
+    </div>
+    <div class="tl-item gold">
+      <span class="when">关键转折 · DAY 2 下午</span>
+      <h4>平台 IdP 走不通，果断自建 IdP</h4>
+      <div class="motive"><b>决策点：</b>平台侧的动态注册接口（DCR）对第三方一律 403，等于"认证中心不给外部系统办接入"。与其死等平台开口子，不如用成熟开源组件（node-oidc-provider）<b>自己当认证中心</b>，半天完成替换并公网化。<b>教训：平台能力边界要早探测，别在设计依赖它之后才发现。</b></div>
+      <div class="xref"><span class="k">对话检索词</span> 「Trusted Hosts」「DCR」「node-oidc-provider」 · <span class="k">记录</span> retrospective.md 第 4 条；oauthDemo README e6ca5f4</div>
+    </div>
+    <div class="tl-item gold">
+      <span class="when">规范落地 · DAY 2 下午</span>
+      <h4>按 MCP 2025 规范补齐"凭证该发给谁"</h4>
+      <div class="motive"><b>思路：</b>新版 MCP 客户端授权时必带 resource 参数（这张凭证<b>只能用于哪个服务</b>），IdP 要支持（RFC 8707）；而带 audience 的凭证 userinfo 验不了，资源服务器必须改用 introspection 验（RFC 7662）。<b>规范不是负担，是别人替你踩过的坑。</b></div>
+      <div class="xref"><span class="k">对话检索词</span> 「invalid_target」「resource indicator」 · <span class="k">云端备份标记</span> *.bak-rfc8707</div>
+    </div>
+    <div class="tl-item">
+      <span class="when">收官 · DAY 2 傍晚</span>
+      <h4>连接器配通 → 销毁万能钥匙（OAuth-only）→ 文档三件套</h4>
+      <div class="motive"><b>收官动作：</b>企业连接器配通（17 个工具可用）→ 观察期后删除静态通道（原值即焚、不留档）→ 上线 HTTPS 域名入口 → 补齐 deployment / reproduction / retrospective 三份文档。<b>破坏性变更永远带三件套：快照、改前基线、秒级回滚位。</b></div>
+      <div class="xref"><span class="k">对话检索词</span> 「MCP_AUTH_MODE=oauth」「remove-static-token」 · <span class="k">OpenSpec</span> archive/2026-10-06-remove-static-token · <span class="k">Commit</span> odoo a05457c → a685713</div>
+    </div>
+  </div>
+
+  <h3>贯穿始终的四条工程思路（这部分最值得讲）</h3>
+  <ol>
+    <li><b>问题驱动，而非技术驱动。</b>每一步都对应一个真实痛点（钥匙失控 → 平台不开门 → 规范不兼容），听众能听懂痛点，就听得懂方案。</li>
+    <li><b>先沙盒验证，再动生产。</b>授权码流程先在独立小项目跑通，确认端点、回调、scope 全部正确后才改资源服务器。</li>
+    <li><b>灰度与回滚是胆量的来源。</b>双通道并存 + 快照 + 秒级回滚位，让"删静态 token"这种破坏性操作可以从容执行。</li>
+    <li><b>AI 结对开发的全过程天然是教学素材。</b>每一步的对话记录、OpenSpec 提案、commit 都在本地可查——讲课时直接检索原文，让听众看到"人和 AI 是怎么一步步把坑排掉的"，这是传统讲义给不了的真实感。</li>
+  </ol>
+</section>
+
+<!-- ============ 第 4 章 ============ -->
+<section class="chapter" id="ch4">
+  <div class="chap-head"><span class="num">04</span><h2>连接器开发教学（给他人复用）</h2><span class="en">Teach Others</span></div>
+
+  <h3>先备齐资源（学员自己部署一套需要的东西）</h3>
+  <table>
+    <tr><th style="width:200px">资源</th><th style="width:230px">规格建议</th><th>用途</th></tr>
+    <tr><td><b>公网云服务器 ×1</b></td><td>1 核 2G 起步（如腾讯云轻量应用服务器）</td><td>跑 odoo-mcp + IdP + Caddy，全部监听 127.0.0.1，Caddy 统一对外</td></tr>
+    <tr><td><b>域名 ×2</b></td><td>免费动态域名（如 duckdns）即可</td><td>一个给 MCP 入口，一个给 IdP；平台要求 HTTPS，必须有域名</td></tr>
+    <tr><td><b>端口放行</b></td><td>22 / 80 / 443</td><td>80/443 给 Caddy（自动签 Let's Encrypt 证书），22 用于管理与隧道</td></tr>
+    <tr><td><b>本地 Docker 环境</b></td><td>Rancher Desktop / Docker Desktop</td><td>跑演示用 Odoo 18（数据源）</td></tr>
+    <tr><td><b>运行时</b></td><td>Python 3.11+、Node.js 22+</td><td>odoo-mcp 与 IdP 各自依赖</td></tr>
+    <tr><td><b>企业后台权限</b></td><td>WorkBuddy 企业版「Connector 管理」</td><td>创建 oauth2_code 连接器（唯一必须人工点界面的环节）</td></tr>
+  </table>
+
+  <h3>第 0 步：先拿到代码（学员裸机状态的起点）</h3>
+  <p>学员本地没有任何环境和代码，所以第一课不是"启动"，而是"这套系统由哪几份代码组成、分别去哪拿"：</p>
+  <table>
+    <tr><th style="width:190px">代码组件</th><th style="width:250px">是什么</th><th>从哪获取</th></tr>
+    <tr><td><b>Odoo 18</b>（数据源）</td><td>开源 ERP，docker-compose 编排，演示数据所在</td><td>公开软件，Docker 镜像直接拉取，无需讲师提供</td></tr>
+    <tr><td><b>odoo_mcp_server</b>（资源服务器）</td><td>本项目主角：暴露 17 个 Odoo 工具的 MCP 服务器 + OAuth 鉴权</td><td>GitHub 仓库 <code>github.com/user1430/odoo</code> 的 <b>18.0 分支</b>（<code>odoo_mcp_server/</code> 目录）<br><b>※ 注意：</b>最新代码（OAuth-only）尚未 push，目前由讲师分发压缩包；push 完成后此处改为直接 clone</td></tr>
+    <tr><td><b>oauthDemo</b>（IdP 授权服务器）</td><td>基于 node-oidc-provider 改造的认证中心，含模拟短信登录页</td><td>随代码包一起分发（讲师侧）；公开复刻可用 node-oidc-provider 官方脚手架替代</td></tr>
+    <tr><td><b>codebuddyOauth</b>（可选）</td><td>OAuth 授权码流程的最小验证客户端，进阶排错用</td><td>讲师侧参考实现，复现阶段不需要</td></tr>
+  </table>
+  <div class="callout warn"><b>讲师侧待办（影响本页准确性）</b>两个仓库目前只有本地提交、尚未 push。<b>push 前</b>：给学员发代码压缩包（odoo_mcp_server + oauthDemo，务必不含任何 <code>.env</code> 与真实密钥），提示词里走「解压」分支；<b>push 后</b>：把提示词第 1 步的分支判断删掉，只留 git clone。分发前在包里跑一遍 <code>grep -r "secret\|SECRET\|password" --include="*.env*" .</code> 确认无真实值。</div>
+
+  <h3>第 1 步起：一条提示词，AI 代跑</h3>
+  <p>原则：<b>不让学员手敲命令</b>。学员在自己电脑上打开 CodeBuddy 或 WorkBuddy，把下面这段发给它——从拉代码、装环境到起服务、自检，全部由 AI 代跑，出错自己修（它会以仓库里的 <code>docs/reproduction.md</code> A 路径为准）：</p>
+
+  <div class="prompt-card">
+    <span class="plabel">PROMPT · 本地最小复现</span>
+    <button class="copy-btn" onclick="copyPrompt('p-repro',this)">复制</button>
+<pre id="p-repro">帮我从零开始在本机搭一套 Odoo MCP + OAuth 最小复现环境（目标路径见 odoo_mcp_server/docs/reproduction.md 的「A. 纯本地复现」）。按顺序执行，每步报告结果，出错自行排查修复并告诉我原因：
+
+1. 获取代码：检查当前目录是否已有 odoo_mcp_server 和 oauthDemo 两个项目。
+   - 若没有：执行 git clone https://github.com/user1430/odoo.git 并 git checkout 18.0；
+   - 如果 clone 失败或讲师发的是压缩包：解压到当前工作目录后继续。
+   - 确认 odoo_mcp_server/docs/reproduction.md 存在，再往下走。
+2. 准备基础环境：确认 Docker（Rancher Desktop 或 Docker Desktop）、Python 3.11+、Node.js 22+ 已就绪；缺什么告诉我安装方法，不要自行全局安装。
+3. 启动本机 Odoo 18（docker-compose），确认 http://127.0.0.1:8069 可访问（demo 库，admin/admin）。
+4. 启动 IdP：在 oauthDemo/server 下 npm install；复制 .env.example 为 .env 并按文档表格填值——ISSUER=http://localhost:3000，DEMO_ECHO_SMS_CODE=true，运行 node scripts/gen-jwks.mjs 生成 JWKS_JSON 写入，CLIENT_SECRET 等密钥生成随机串填入（告诉我变量名即可，不要打印具体值）；然后 npm start（127.0.0.1:3000）。
+5. 启动 odoo-mcp：在 odoo_mcp_server 创建 venv 并 pip install -e .，按文档 A.3 的环境变量以 OAuth 模式启动在 8080，introspection 指向 127.0.0.1:3000，client secret 与 IdP .env 保持一致。启动日志应出现 auth mode=oauth。
+6. 自检：curl -i http://127.0.0.1:8080/mcp 应返回 401 且带 WWW-Authenticate；well-known 端点应返回 200。
+7. 最后教我手动体验授权流程：打开 IdP 自测页 /client 用手机号+模拟验证码登录授权，拿到 token 后用 curl 带 token 调 /mcp 验证 initialize 200。把这三步的操作截图级说明写给我。</pre>
+  </div>
+
+  <div class="prereq">
+    <b>⚑ 提示词之外、必须人工的环节（只有两类）</b>
+    <ul>
+      <li><b>界面操作</b>：WorkBuddy 企业后台创建 oauth2_code 连接器（填 MCP URL、授权/令牌端点、Scopes <code>openid profile email</code>、User Info Name Path <code>name</code>）——这一步必须在浏览器里点，也是教学的核心演示时刻，建议讲师现场带着点一遍。</li>
+      <li><b>授权动作本身</b>：登录页输手机号 + 模拟验证码、点"同意授权"——必须人来点，这正是 OAuth「人授权、机器执行」的精髓，演示时务必保留。</li>
+    </ul>
+  </div>
+
+  <div class="callout tip"><b>教学法建议</b>先让 AI 把环境跑通，再带学员在自测页手动走一遍「授权 → 拿凭证 → 调通」。亲手走过一遍后，"连接器"在他们眼里就不是黑盒，而是"把我刚才手动做的事，交给平台自动做"。</div>
+
+  <h3>学员必背的三个"凡是"</h3>
+  <ul>
+    <li><b>凡是文档里的端点，先 curl 实证再写代码</b>——官方模板也会有错。</li>
+    <li><b>凡是密钥，只进 .env，不进代码、不进文档示例、不进 git</b>——本项目一天抓到过四处硬编码。</li>
+    <li><b>凡是破坏性变更，先快照、留回滚位，再动手</b>——胆量来自退路。</li>
+  </ul>
+</section>
+
+<!-- ============ 第 5 章 ============ -->
+<section class="chapter" id="ch5">
+  <div class="chap-head"><span class="num">05</span><h2>踩坑图鉴（按普适性排序）</h2><span class="en">Hall of Traps</span></div>
+  <p>每张卡标注<b>频率</b>：<span class="freq hi" style="position:static">高频 · 人人会遇到</span> 或 <span class="freq mid" style="position:static">中频 · 特定场景</span>。只保留对别人有复用价值的坑；只在本次项目出现过一次的低频坑已略去（完整 18 条见 <code>docs/retrospective.md</code>）。<b>对照线索</b>指向你的本地对话记录，讲课时可现场搜出原过程。</p>
+
+  <div class="pit"><div class="badges"><span class="freq hi">高频 · 平台接入</span></div>
+    <h4>1 · 官方文档/模板里的端点可能是错的</h4>
+    <p class="symptom"><b>症状：</b>按模板配的授权端点，落到企业登录页报「账号不存在」，怎么改参数都没用。<b>真相：</b>模板地址并非真实授权服务，实际可用的是另一组端点。</p>
+    <div class="fix">任何文档/模板给的端点，先 curl 实证再写进代码。一小时实测胜过一天调试。</div>
+    <div class="xref"><span class="k">对照</span> 对话 2026-10-05 · 检索「账号不存在」 · OpenSpec fix-oauth-endpoints</div>
+  </div>
+
+  <div class="pit"><div class="badges"><span class="freq hi">高频 · OAuth 必遇</span></div>
+    <h4>2 · localhost 与 127.0.0.1 不是一回事</h4>
+    <p class="symptom"><b>症状：</b>回调地址填 <code>localhost</code> 被平台直接拒绝，改成 <code>127.0.0.1</code> 立刻通过。一字之差，卡一小时。</p>
+    <div class="fix">平台侧填回调一律用 127.0.0.1；同时规划好端口，避开本机已占用端口（当时 3000 被占，用了 3001）。</div>
+    <div class="xref"><span class="k">对照</span> 对话 2026-10-05 · 检索「localhost」</div>
+  </div>
+
+  <div class="pit"><div class="badges"><span class="freq hi">高频 · 演示现场必背</span></div>
+    <h4>3 · 「登录故障」其实是浏览器 cookie 卡死</h4>
+    <p class="symptom"><b>症状：</b>短信验证码提交后被弹回登录页、反复循环，怎么看都像平台挂了。<b>真相：</b>认证服务的会话 cookie 在当前浏览器卡死。<b>换无痕窗口立刻恢复。</b></p>
+    <div class="fix">怀疑平台故障前，先用无痕窗口隔离浏览器状态；排查期间可用命令行方式（client_credentials + scope=openid）兜底验证端点。这是 OAuth 调试最常见的"灵异事件"，讲师必须预判。</div>
+    <div class="xref"><span class="k">对照</span> 对话 2026-10-06 · 检索「无痕」「execution」</div>
+  </div>
+
+  <div class="pit"><div class="badges"><span class="freq hi">高频 · 凭据安全</span></div>
+    <h4>4 · 密钥硬编码的四个藏身处</h4>
+    <p class="symptom"><b>现场：</b>一天抓到四处真实密钥——代码里的默认值、.env.example 填真值、README 的 curl 示例带真值、还有一个进了 git commit（最后 amend + gc 抹除并轮换）。</p>
+    <div class="fix">① 代码 fail-fast，不写默认值——没有默认值就没有泄露；② .env.example 和文档示例按"占位符"标准评审；③ 提交前 grep 已知密钥值，是最便宜的扫描；④ 本地仓库没有 remote 不代表可以入库，历史会跟着仓库走。</div>
+    <div class="xref"><span class="k">对照</span> retrospective.md 第 8 条 · 检索「amend」「轮换」 · 关联 memory：凭据不入库规则</div>
+  </div>
+
+  <div class="pit"><div class="badges"><span class="freq mid">中频 · 上域名时</span></div>
+    <h4>5 · 域名一上，MCP 全部 421 Invalid Host header</h4>
+    <p class="symptom"><b>症状：</b>localhost 一切正常，换域名访问立刻 421。<b>真相：</b>FastMCP 默认开启 DNS-rebinding 保护，只认 loopback 的 Host 头。</p>
+    <div class="fix">不要关保护，用 Caddy 反代统一改写 Host 头（header_up Host 127.0.0.1:8080），零代码改动、保护仍在。<b>安全默认值要先理解再绕行。</b></div>
+    <div class="xref"><span class="k">对照</span> 对话 2026-10-06 · 检索「421」「header_up」</div>
+  </div>
+
+  <div class="pit"><div class="badges"><span class="freq mid">中频 · MCP OAuth 接入</span></div>
+    <h4>6 · MCP OAuth 的规范是一个"套餐"，单点做会连环报错</h4>
+    <p class="symptom"><b>症状：</b>先报 <code>invalid_target: resource indicator is missing</code>（RFC 8707：客户端要求声明凭证用途）；修完后带 audience 的凭证又被 userinfo 拒（必须改用 introspection，RFC 7662）；401 若不带 <code>WWW-Authenticate</code> 挑战头，客户端连"去哪授权"都不知道（RFC 9728）。</p>
+    <div class="fix">把 9728（资源元数据）+ 8707（resource）+ 7662（introspection）+ 401 挑战头当一个套餐讲、一个套餐做，缺一块就会在下个环节爆雷。</div>
+    <div class="xref"><span class="k">对照</span> 对话 2026-10-06 · 检索「invalid_target」「WWW-Authenticate」 · 云端备份 *.bak-rfc8707</div>
+  </div>
+
+  <div class="pit"><div class="badges"><span class="freq mid">中频 · 方案设计期</span></div>
+    <h4>7 · 把平台能力边界的探测拖到了设计之后</h4>
+    <p class="symptom"><b>症状：</b>方案已按「用平台接口动态注册客户端」设计，实测发现该接口对第三方一律 403，此路不通。</p>
+    <div class="fix">依赖外部平台的关键能力，第一天就做可行性穿刺测试。这次发现得不算晚，半天切换到自建 IdP。</div>
+    <div class="xref"><span class="k">对照</span> 对话 2026-10-06 · 检索「Trusted Hosts」「DCR」</div>
+  </div>
+
+  <div class="pit"><div class="badges"><span class="freq mid">中频 · 本地联调</span></div>
+    <h4>8 · 测试打到了旧进程上</h4>
+    <p class="symptom"><b>症状：</b>改了配置重启服务，行为却像没改——残留的旧进程占着端口，新进程起不来，日志看着却像启动成功。</p>
+    <div class="fix">测试前 <code>lsof -i :端口</code> 确认端口归属；判断启动成功以真正 bind 成功的行为为准，不以启动日志为准。</div>
+    <div class="xref"><span class="k">对照</span> retrospective.md 第 14 条 · 检索「lsof」「bind」</div>
+  </div>
+
+  <div class="callout info"><b>已略去的低频坑</b>「灰度指标无观测数据」「ss 输出误读」「caddy validate 副作用」「分片传输丢字符」等仅在本项目特定操作中出现一次，对学员复用价值低，已从正篇移除；讲师备课可翻 <code>docs/retrospective.md</code> 第 9～15 条备用。</div>
+</section>
+
+<!-- ============ 第 6 章 ============ -->
+<section class="chapter" id="ch6">
+  <div class="chap-head"><span class="num">06</span><h2>演讲与录制建议</h2><span class="en">Presentation</span></div>
+
+  <h3>推荐叙事线：效果 → 原理 → 故事 → 教学</h3>
+  <div class="beat"><div class="t">0' – 3'</div><div class="do"><b>直接演示效果。</b>打开 WorkBuddy，自然语言问「帮我查一下这周的生产订单」，等结果出来。<b>此时一个字技术都不要讲。</b>让听众先产生"我想要这个"。</div></div>
+  <div class="beat"><div class="t">3' – 8'</div><div class="do"><b>用第 1 章类比讲原理。</b>「刚才发生的事，就跟你微信扫码授权登录一个 App 一模一样，只是主角换成了 AI」——全程只借这一个听众已有的心智模型，不引入第二个场景。</div></div>
+  <div class="beat"><div class="t">8' – 18'</div><div class="do"><b>讲开发故事（第 3 章时间线）。</b>每讲到一段，<b>现场在对话记录里搜出当时的原文</b>给听众看——"这不是事后编的讲义，是当时真实的排查过程"。转折处（自建 IdP）是全篇最有戏剧性的点，放慢讲。</div></div>
+  <div class="beat"><div class="t">18' – 26'</div><div class="do"><b>踩坑图鉴精选（第 5 章）。</b>只讲高频 4 张卡（约 8 分钟），中频一笔带过。核心信息：<b>出问题先怀疑自己的环境，文档也可能是错的</b>。</div></div>
+  <div class="beat"><div class="t">26' – 33'</div><div class="do"><b>教学环节（第 4 章）。</b>现场把复现提示词发给 CodeBuddy，<b>让 AI 跑、你解说</b>——这本身就是"AI 结对开发"最好的广告。最后带听众在企业后台点一遍连接器创建，给「三个凡是」收尾。</div></div>
+
+  <h3>对这类听众的五个表达技巧</h3>
+  <ol>
+    <li><b>术语零假设。</b>第一次出现的缩写当场翻译：token = 授权凭证、IdP = 认证中心、introspection = 打电话回认证中心核实。</li>
+    <li><b>每屏只讲一件事。</b>架构图分三层揭示，不要一次铺开全图。</li>
+    <li><b>用"翻车故事"代替"正确做法"开场。</b>「我们卡了一小时，只因为把 127.0.0.1 写成了 localhost」比「请注意回调地址规范」有效十倍。</li>
+    <li><b>演示必须有 plan B。</b>提前录好关键操作的成功录屏；现场只做能容忍失败的操作；授权登录前必开无痕窗口。</li>
+    <li><b>把凭据安全演给他们看。</b>故意展示「密钥只在 .env、文档里全是占位符」，对渠道伙伴这是最有说服力的专业信号。</li>
+  </ol>
+
+  <h3>录制要点</h3>
+  <ul>
+    <li>按章节分段录制（每段 5–10 分钟），比一镜到底更易补录复用；第 2、4 章适合纯操作录屏，第 3、5 章适合讲解 + 手册同屏。</li>
+    <li>命令一律让 AI 跑（第 2、4 章提示词）或从备忘录粘贴，避免现场敲错；终端字体放大到 16px+。</li>
+    <li>云端配置文件（<code>override.conf</code>、IdP <code>.env</code>）与服务器地址一律避开画面或打码；鉴权日志里 token 只有 sha256 前 8 位，是安全的可展示素材。</li>
+  </ul>
+</section>
+
+<!-- ============ 第 7 章 ============ -->
+<section class="chapter" id="ch7">
+  <div class="chap-head"><span class="num">07</span><h2>附录 · 速查</h2><span class="en">Cheatsheet</span></div>
+
+  <h3>两条提示词速查</h3>
+  <table>
+    <tr><th style="width:220px">用途</th><th>位置</th></tr>
+    <tr><td>演示环境一键恢复（讲师自用）</td><td>第 2 章 PROMPT · 演示环境一键恢复</td></tr>
+    <tr><td>本地最小复现（学员教学）</td><td>第 4 章 PROMPT · 本地最小复现</td></tr>
+  </table>
+
+  <h3>文档地图（仓库内）</h3>
+  <table>
+    <tr><th style="width:260px">文件</th><th>用途</th></tr>
+    <tr><td><code>docs/deployment.md</code></td><td>云端部署与运维手册（<b>含服务器地址等私有信息，仅存本地、勿分发</b>）</td></tr>
+    <tr><td><code>docs/reproduction.md</code></td><td>三条复现路径：纯本地 / 借用演示环境 / 混合（第 4 章提示词的数据源）</td></tr>
+    <tr><td><code>docs/retrospective.md</code></td><td>18 条踩坑复盘完整版（含已略去的低频坑）</td></tr>
+    <tr><td><code>openspec/</code></td><td>变更提案与归档：每次改动的动机、方案、任务留痕</td></tr>
+  </table>
+
+  <h3>关键事实速记</h3>
+  <ul>
+    <li>当前鉴权模式：<b>OAuth-only</b>（introspection 优先）；静态 token 已删除且原值未留档——回滚双通道需重新生成。</li>
+    <li>连接器：<code>enterprise_ruixin_test_demo</code>，已配通，17 个工具可用。</li>
+    <li>授权登录：手机号 + <b>模拟验证码</b>（页面回显，纯演示，不代表真实身份）；账密兜底。</li>
+    <li>IdP 是内存态：重启丢动态客户端与进行中的会话，已签发 token 不受影响；连接器用静态 client，不受重启影响。</li>
+    <li>凭据轮换三处同步：云端 IdP <code>.env</code> + odoo-mcp <code>override.conf</code> + 企业后台连接器配置。</li>
+    <li>演示 Odoo 数据对借用者<b>只读、勿依赖持久性</b>。</li>
+  </ul>
+</section>
+
+<footer class="end">
+  <div class="seal-line">先验证链路，再动生产；胆量来自退路。</div>
+  <p>Odoo MCP 连接器 · 演示重启与开发教学手册 · v1.1 · 2026-10-06<br>配套文档：deployment.md（私有）/ reproduction.md / retrospective.md</p>
+  <a class="totop" href="#ch0">回到顶部 ↑</a>
+</footer>
+
+</main>
+</div>
+
+<script>
+function copyPrompt(id,btn){
+  var el=document.getElementById(id);
+  var text=el.innerText;
+  function done(){btn.textContent='已复制 ✓';setTimeout(function(){btn.textContent='复制'},1600)}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(function(){fallback()});
+  }else{fallback()}
+  function fallback(){
+    var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);
+    ta.select();try{document.execCommand('copy');done()}catch(e){btn.textContent='复制失败'}
+    document.body.removeChild(ta);
+  }
+}
+</script>
+</body>
+</html>
