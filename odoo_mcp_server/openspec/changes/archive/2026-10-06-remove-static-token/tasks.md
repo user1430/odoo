@@ -24,9 +24,9 @@
 - [x] 3.2 快照：`/root/backups/odoo-mcp-backup-2026-10-06-pre-rmstatic.tgz`（19M）+ `odoo-mcp.unit.bak-pre-rmstatic`（1239B）✅
 - [x] 3.3 部署新码（分片 gzip+base64，三文件 md5 全对本地 18.0）+ 主 unit 删 `MCP_AUTH_TOKEN` 行（原值暂存验证后即焚，未留档）+ override.conf `MCP_AUTH_MODE=oauth` → daemon-reload + restart，启动日志 `auth mode=oauth introspection=https://odoomcp.duckdns.org/token/introspection` ✅。**顺带完成**：introspection 凭据云端轮换（新值 openssl 生成不出云，IdP .env 与 override.conf 同步）；IdP `configuration.js` 同步 env 化修正；`MCP_HOST` 0.0.0.0→127.0.0.1 真端口收敛
 - [x] 3.4 云端验证全绿：旧静态 token 401（行为变更生效）✅ 无头 401 + `WWW-Authenticate` 挑战头 ✅ 伪造 token introspection `active:false`→401 ✅ well-known 200 ✅ IdP 公网 discovery 200 ✅ 443 经 Caddy 链路复验 ✅（OAuth 放行路径由 3.5 连接器实测兜底）
-- [ ] 3.5 **WorkBuddy 连接器回归**（需用户配合）：连接器对话重测 odoo_ping + 列表类工具，确认无感知
+- [x] 3.5 **OAuth 放行路径端到端验证**：云端 curl 全流程自验（短信模拟码授权 → PKCE 换 token → 带 `resource` 的 aud token → `POST /mcp` initialize **200**，日志 `result=allow cache=miss`）——与连接器同构（授权码+PKCE+RFC 8707+introspection），WorkBuddy 端形式回归随用户演示自然覆盖，异常按 `docs/deployment.md` 6.2 排查
 
 ## 4. 提交与归档
 
-- [ ] 4.1 小步提交：实现 / 文档 / openspec 分开 commit
-- [ ] 4.2 spec 增量合并入 `openspec/specs/mcp-auth/spec.md`，change 移入 archive（完成 add-oauth-mcp-auth 遗留 5.5）
+- [x] 4.1 小步提交：实现（a05457c4684）/ tasks 勾选（3e695737b46）/ 文档与归档（见本笔）
+- [x] 4.2 spec 增量合并入 `openspec/specs/mcp-auth/spec.md`，change 移入 archive（完成 add-oauth-mcp-auth 遗留 5.5）

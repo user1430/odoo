@@ -146,25 +146,27 @@ MCP_TRANSPORT=streamable-http MCP_HOST=0.0.0.0 MCP_PORT=8080 odoo-mcp-server
 
 ## 云端部署现状（<REGION>轻量服务器）
 
-已在腾讯云<REGION>轻量服务器部署本 MCP Server（streamable-http 模式），数据源仍为本机 Odoo：
+已上线 **OAuth-only** 形态：企业连接器（oauth2_code）经自建 IdP 授权后访问，静态 token 通道已移除。
 
 ```
-云端 MCP 客户端 ──HTTP :8080──▶ odoo-mcp(<SERVER_IP>, systemd) ──SSH隧道 :7069──▶ 本机 Odoo(:8069)
+WorkBuddy 连接器 ──HTTPS 443──▶ Caddy ──▶ odoo-mcp(127.0.0.1:8080, OAuth 校验) ──SSH隧道──▶ 本机 Odoo(:8069)
+                     授权登录 ──▶ 自建 IdP(odoomcp.duckdns.org, node-oidc-provider)
 ```
 
 | 项 | 值 |
 | --- | --- |
-| MCP 地址 | `http://<SERVER_IP>:8080/mcp` |
-| 传输方式 | `streamable-http`（Bearer Token 鉴权） |
-| 云端服务 | systemd 服务 `odoo-mcp`，代码位于 `/opt/odoo-mcp-server` |
-| 数据链路 | 云端 `ODOO_URL=http://127.0.0.1:7069` → SSH 反向隧道 → 本机 `127.0.0.1:8069` |
+| MCP 地址 | `https://odoomcpdemo.duckdns.org/mcp` |
+| 授权服务器 | `https://odoomcp.duckdns.org`（短信模拟码/账密登录，DCR 开放） |
+| 鉴权 | OAuth Bearer（introspection 优先；无有效 token 一律 401 + 挑战头） |
+| 云端服务 | systemd：`odoo-mcp`（`/opt/odoo-mcp-server`）、`odoo-idp`（`/opt/odoo-idp/server`）、`caddy` |
+| 数据链路 | 云端 `ODOO_URL=http://127.0.0.1:7069` → SSH 反向隧道 → 本机 `127.0.0.1:8069`（`demo` 库） |
 | 隧道 | 本机执行 `./ssh-tunnel-start.sh`（密钥 `~/.ssh/odoo_tunnel_ed25519`，云端仅允许端口转发） |
-| 数据库 | 本机 `demo` 库（注意不是 `odoo`） |
+
+**运维/备份/故障排查见 [docs/deployment.md](docs/deployment.md)；本地复现与借用见 [docs/reproduction.md](docs/reproduction.md)；改造经验见 [docs/retrospective.md](docs/retrospective.md)。**
 
 注意事项：
 
-- 本机关机/隧道断开时，云端 MCP 只能握手，无法读 Odoo 数据；重新 `./ssh-tunnel-start.sh` 即恢复。
-- 公司办公网代理拦截对外 8080 端口（502 来自公司网关），请在家庭网络/热点下使用该地址。
+- 本机关机/隧道断开时，云端 MCP 握手与鉴权正常，但无法读 Odoo 数据；重新 `./ssh-tunnel-start.sh` 即恢复。
 - 曾尝试 frp 隧道，因公司网络对非标端口 TLS 的拦截而弃用（frps 已停止，防火墙 7000/8443 规则闲置）。
 - `crm` 工具需 demo 库安装 `crm` 模块后方可使用。
 
