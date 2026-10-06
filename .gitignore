@@ -7,6 +7,7 @@ _build/
 !.github
 !.mailmap
 !.weblate.json
+!odoo_mcp_server/.env.example
 # compiled python files
 *.py[co]
 __pycache__/

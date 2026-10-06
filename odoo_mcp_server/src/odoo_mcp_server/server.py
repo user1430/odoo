@@ -10,7 +10,6 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
@@ -243,36 +242,6 @@ def create_production_order(
     return client.create("mrp.production", vals)
 
 
-class _BearerAuthMiddleware:
-    """纯 ASGI 中间件：设置 MCP_AUTH_TOKEN 后，所有 HTTP 请求必须带
-    `Authorization: Bearer <token>`，否则返回 401。非 HTTP scope（如
-    lifespan）直接透传。"""
-
-    def __init__(self, app: Any, token: str) -> None:
-        self.app = app
-        self.token = token.encode("utf-8")
-
-    async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
-        if scope.get("type") != "http":
-            await self.app(scope, receive, send)
-            return
-        headers = dict(scope.get("headers") or [])
-        auth = headers.get(b"authorization", b"")
-        if auth != b"Bearer " + self.token:
-            await send(
-                {
-                    "type": "http.response.start",
-                    "status": 401,
-                    "headers": [(b"content-type", b"application/json")],
-                }
-            )
-            await send(
-                {"type": "http.response.body", "body": b'{"error": "unauthorized"}'}
-            )
-            return
-        await self.app(scope, receive, send)
-
-
 def _resolve_transport() -> str:
     raw = os.environ.get("MCP_TRANSPORT", "stdio").strip().lower()
     return {"http": "streamable-http", "streamable_http": "streamable-http"}.get(
@@ -283,20 +252,21 @@ def _resolve_transport() -> str:
 def _run_http(transport: str) -> None:
     import uvicorn
 
+    from .auth import build_auth_middleware
+
     host = os.environ.get("MCP_HOST", "127.0.0.1")
     port = int(os.environ.get("MCP_PORT", "8080"))
-    token = os.environ.get("MCP_AUTH_TOKEN", "").strip()
+    mode = os.environ.get("MCP_AUTH_MODE", "both")
 
     app = mcp.sse_app() if transport == "sse" else mcp.streamable_http_app()
-    if token:
-        app = _BearerAuthMiddleware(app, token)  # type: ignore[assignment]
+    app = build_auth_middleware(app, mode)  # type: ignore[assignment]
 
     logging.getLogger("odoo_mcp").info(
-        "MCP server listening on http://%s:%s (transport=%s, auth=%s)",
+        "MCP server listening on http://%s:%s (transport=%s, auth_mode=%s)",
         host,
         port,
         transport,
-        "bearer-token" if token else "none(内网使用)",
+        mode.strip().lower(),
     )
     uvicorn.run(app, host=host, port=port, log_level="info")
 
