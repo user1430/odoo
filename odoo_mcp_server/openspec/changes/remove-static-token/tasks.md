@@ -1,6 +1,6 @@
 # Tasks: remove-static-token
 
-> 提案待用户确认后实施。云端步骤每步留快照。
+> 提案已经用户确认实施（2026-10-06「不要留风险/不要留垃圾」+「继续处理」）。云端步骤每步留快照。
 
 ## 1. 代码
 
@@ -20,10 +20,10 @@
 
 ## 3. 云端灰度（先决：本地矩阵全绿）
 
-- [ ] 3.1 **确认静态 token 无分发**（⚠️ 审计依据修正：静态命中放行不打日志，journal 无法区分静态使用——可靠依据是持有方仅云端 unit + 用户本人，且连接器已实测走 OAuth；与用户确认 token 未曾发给第三方即可继续）
-- [ ] 3.2 快照：`tar czf /root/odoo-mcp-backup-$(date +%F).tgz /opt/odoo-mcp-server` + `systemctl cat odoo-mcp > ~/odoo-mcp.unit.bak-rmstatic`
-- [ ] 3.3 部署新码（md5 对齐本地 18.0）+ 主 unit 删 `MCP_AUTH_TOKEN` 行 + override.conf `MCP_AUTH_MODE=oauth` → `daemon-reload` + restart，启动日志 `auth mode=oauth introspection=...`
-- [ ] 3.4 云端验证：旧静态 token 401 + 挑战头；OAuth initialize + odoo_ping 放行（pos-hit）；well-known 200；伪造 token 401
+- [x] 3.1 **确认静态 token 无分发**（⚠️ 审计依据修正：静态命中放行不打日志，journal 无法区分静态使用——可靠依据是持有方仅云端 unit + 用户本人，且连接器已实测走 OAuth；用户以「不要留风险」+「继续处理」明确指示执行）
+- [x] 3.2 快照：`/root/backups/odoo-mcp-backup-2026-10-06-pre-rmstatic.tgz`（19M）+ `odoo-mcp.unit.bak-pre-rmstatic`（1239B）✅
+- [x] 3.3 部署新码（分片 gzip+base64，三文件 md5 全对本地 18.0）+ 主 unit 删 `MCP_AUTH_TOKEN` 行（原值暂存验证后即焚，未留档）+ override.conf `MCP_AUTH_MODE=oauth` → daemon-reload + restart，启动日志 `auth mode=oauth introspection=https://odoomcp.duckdns.org/token/introspection` ✅。**顺带完成**：introspection 凭据云端轮换（新值 openssl 生成不出云，IdP .env 与 override.conf 同步）；IdP `configuration.js` 同步 env 化修正；`MCP_HOST` 0.0.0.0→127.0.0.1 真端口收敛
+- [x] 3.4 云端验证全绿：旧静态 token 401（行为变更生效）✅ 无头 401 + `WWW-Authenticate` 挑战头 ✅ 伪造 token introspection `active:false`→401 ✅ well-known 200 ✅ IdP 公网 discovery 200 ✅ 443 经 Caddy 链路复验 ✅（OAuth 放行路径由 3.5 连接器实测兜底）
 - [ ] 3.5 **WorkBuddy 连接器回归**（需用户配合）：连接器对话重测 odoo_ping + 列表类工具，确认无感知
 
 ## 4. 提交与归档
