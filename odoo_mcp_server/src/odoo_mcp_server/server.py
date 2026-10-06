@@ -242,6 +242,37 @@ def create_production_order(
     return client.create("mrp.production", vals)
 
 
+# ---------- RFC 9728 受保护资源元数据（OAuth 发现入口，须匿名可访问） ----------
+# 授权服务器为外部 IdP（copilot Keycloak），本服务仅作为资源服务器暴露元数据；
+# /authorize、/token、/register(DCR) 由 IdP 提供，见 issuer 的 openid-configuration。
+
+DEFAULT_PUBLIC_URL = "https://odoomcpdemo.duckdns.org"
+DEFAULT_AUTHORIZATION_SERVER = "https://copilot.tencent.com/auth/realms/copilot"
+
+
+def _resource_metadata() -> dict:
+    base = os.environ.get("MCP_PUBLIC_URL", "").strip() or DEFAULT_PUBLIC_URL
+    base = base.rstrip("/")
+    auth_server = (
+        os.environ.get("OAUTH_AUTHORIZATION_SERVER", "").strip()
+        or DEFAULT_AUTHORIZATION_SERVER
+    )
+    return {
+        "resource": f"{base}/mcp",
+        "authorization_servers": [auth_server],
+        "bearer_methods_supported": ["header"],
+        "scopes_supported": ["openid"],
+    }
+
+
+@mcp.custom_route("/.well-known/oauth-protected-resource", methods=["GET"])
+@mcp.custom_route("/.well-known/oauth-protected-resource/mcp", methods=["GET"])
+async def oauth_protected_resource_metadata(request):  # noqa: ANN001, ANN202
+    from starlette.responses import JSONResponse
+
+    return JSONResponse(_resource_metadata())
+
+
 def _resolve_transport() -> str:
     raw = os.environ.get("MCP_TRANSPORT", "stdio").strip().lower()
     return {"http": "streamable-http", "streamable_http": "streamable-http"}.get(
