@@ -243,11 +243,11 @@ def create_production_order(
 
 
 # ---------- RFC 9728 受保护资源元数据（OAuth 发现入口，须匿名可访问） ----------
-# 授权服务器为外部 IdP（copilot Keycloak），本服务仅作为资源服务器暴露元数据；
-# /authorize、/token、/register(DCR) 由 IdP 提供，见 issuer 的 openid-configuration。
+# 授权服务器为自建 IdP（odoomcp.duckdns.org，node-oidc-provider），本服务仅作为
+# 资源服务器暴露元数据；/authorize、/token、/register(DCR) 由 IdP 提供。
 
 DEFAULT_PUBLIC_URL = "https://odoomcpdemo.duckdns.org"
-DEFAULT_AUTHORIZATION_SERVER = "https://copilot.tencent.com/auth/realms/copilot"
+DEFAULT_AUTHORIZATION_SERVER = "https://odoomcp.duckdns.org"
 
 
 def _resource_metadata() -> dict:
@@ -287,7 +287,7 @@ def _run_http(transport: str) -> None:
 
     host = os.environ.get("MCP_HOST", "127.0.0.1")
     port = int(os.environ.get("MCP_PORT", "8080"))
-    mode = os.environ.get("MCP_AUTH_MODE", "both")
+    mode = os.environ.get("MCP_AUTH_MODE", "oauth")
 
     app = mcp.sse_app() if transport == "sse" else mcp.streamable_http_app()
     app = build_auth_middleware(app, mode)  # type: ignore[assignment]

@@ -1,17 +1,15 @@
-"""HTTP 传输鉴权中间件（change: add-oauth-mcp-auth）。
+"""HTTP 传输 OAuth 鉴权中间件。
 
-三种模式（环境变量 MCP_AUTH_MODE，默认 both）：
-- static：仅静态 Bearer Token 校验（hmac.compare_digest 常数时间比较），行为与改造前一致；
-- oauth：仅 OAuth Bearer 校验（调 OAUTH_USERINFO_ENDPOINT 在线验证，带正负缓存与降级）；
-- both：先静态比对，不匹配再走 OAuth 校验；一次请求只走一条路径。
+在线校验 Bearer token：introspection（RFC 7662，配置后优先）或 userinfo，
+带正负缓存与降级。MCP_AUTH_MODE 仅接受 oauth（缺省即 oauth）；静态 token
+通道已随 change remove-static-token 移除（static/both 启动即 ValueError）。
 
-安全约定（design D5）：日志只记录 sha256(token) 前 8 位，绝不记录 token 原文与
+安全约定：日志只记录 sha256(token) 前 8 位，绝不记录 token 原文与
 Authorization 头；非 HTTP scope（lifespan 等）直接透传。
 """
 from __future__ import annotations
 
 import hashlib
-import hmac
 import logging
 import os
 import time
@@ -22,7 +20,7 @@ import httpx
 
 logger = logging.getLogger("odoo_mcp.auth")
 
-DEFAULT_USERINFO_ENDPOINT = "https://copilot.tencent.com/oauth2/userinfo"
+DEFAULT_USERINFO_ENDPOINT = "https://odoomcp.duckdns.org/me"
 DEFAULT_CACHE_TTL = 300.0  # 正缓存 TTL（秒）
 NEG_CACHE_TTL = 60.0  # 负缓存 TTL（秒）
 CACHE_CAPACITY = 1024
@@ -108,55 +106,15 @@ class _TokenCache:
             self._entries.popitem(last=False)
 
 
-class _StaticTokenMatcher:
-    """静态 token 比对（常数时间）。token 未配置时视为永不匹配（fail-closed，design D4）。"""
-
-    def __init__(self, token: str | None) -> None:
-        self._token = token.encode("utf-8") if token else None
-
-    @property
-    def configured(self) -> bool:
-        return self._token is not None
-
-    def matches(self, token: str | None) -> bool:
-        if self._token is None or token is None:
-            return False
-        return hmac.compare_digest(token.encode("utf-8"), self._token)
-
-
-class _StaticTokenMiddleware:
-    """纯 ASGI 中间件：所有 HTTP 请求必须带正确的静态
-    `Authorization: Bearer <token>`，否则 401。非 HTTP scope 直接透传。"""
-
-    def __init__(self, app: Any, token: str | None) -> None:
-        self.app = app
-        self._matcher = _StaticTokenMatcher(token)
-
-    async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
-        if scope.get("type") != "http":
-            await self.app(scope, receive, send)
-            return
-        if _is_exempt(scope):
-            await self.app(scope, receive, send)
-            return
-        if not self._matcher.matches(_extract_bearer(scope)):
-            await _send_json(
-                send, 401, b'{"error": "unauthorized"}', [_bearer_challenge_header()]
-            )
-            return
-        await self.app(scope, receive, send)
-
-
 class OAuthBearerMiddleware:
     """OAuth Bearer 校验中间件（纯 ASGI）。
 
-    校验协议（design D1 扩展，二选一，introspection 优先）：
+    校验协议（二选一，introspection 优先）：
     - introspection（RFC 7662）：POST 端点，client_secret_post 认证，active=true 放行。
       适用于 token 带 audience（RFC 8707）的 IdP——userinfo 会拒绝此类 token。
     - userinfo：GET 端点，Authorization: Bearer <token>；200→有效。
-    均带正负缓存；降级（design D3）：校验端点不可达时，该 token 有未过期
+    均带正负缓存；降级：校验端点不可达时，该 token 有未过期
     正缓存则放行，否则 503 {"error":"auth_unavailable"}。
-    static_token 非空时（both 模式）先做静态比对，命中直接放行。
     """
 
     def __init__(
@@ -164,7 +122,6 @@ class OAuthBearerMiddleware:
         app: Any,
         userinfo_endpoint: str,
         cache_ttl: float = DEFAULT_CACHE_TTL,
-        static_token: str | None = None,
         introspection: dict | None = None,
     ) -> None:
         self.app = app
@@ -172,7 +129,6 @@ class OAuthBearerMiddleware:
         self._introspection = introspection  # {"endpoint","client_id","client_secret"} 或 None
         self._ttl = cache_ttl
         self._cache = _TokenCache()
-        self._static = _StaticTokenMatcher(static_token)
         self._client: httpx.AsyncClient | None = None
 
     async def _get_client(self) -> httpx.AsyncClient:
@@ -189,12 +145,6 @@ class OAuthBearerMiddleware:
             return
 
         token = _extract_bearer(scope)
-
-        # both 模式：先静态比对（常数时间），命中直接放行
-        if self._static.matches(token):
-            await self.app(scope, receive, send)
-            return
-
         if token is None:
             await _send_json(
                 send, 401, b'{"error": "unauthorized"}', [_bearer_challenge_header()]
@@ -336,35 +286,18 @@ def _verify_desc(introspection: dict | None) -> str:
 
 
 def build_auth_middleware(app: Any, mode: str) -> Any:
-    """按 MCP_AUTH_MODE 装配鉴权中间件。非法 mode 抛 ValueError（fail-fast）。"""
-    normalized = (mode or "").strip().lower()
-    static_token = os.environ.get("MCP_AUTH_TOKEN", "").strip() or None
+    """装配 OAuth 鉴权中间件。mode 仅接受 oauth（空值视同 oauth）；
+    static/both 已随 remove-static-token 移除，传入即 ValueError（fail-fast，
+    暴露残留配置而非静默忽略）。"""
+    normalized = (mode or "").strip().lower() or "oauth"
     introspection = _env_introspection()
 
-    if normalized == "static":
-        logger.info(
-            "auth mode=static (static_token=%s)",
-            "configured" if static_token else "missing(fail-closed)",
-        )
-        return _StaticTokenMiddleware(app, static_token)
     if normalized == "oauth":
         logger.info("auth mode=oauth %s", _verify_desc(introspection))
         return OAuthBearerMiddleware(
             app, _env_userinfo_endpoint(), _env_cache_ttl(), introspection=introspection
         )
-    if normalized == "both":
-        logger.info(
-            "auth mode=both %s static_token=%s",
-            _verify_desc(introspection),
-            "configured" if static_token else "missing",
-        )
-        return OAuthBearerMiddleware(
-            app,
-            _env_userinfo_endpoint(),
-            _env_cache_ttl(),
-            static_token=static_token,
-            introspection=introspection,
-        )
     raise ValueError(
-        f"非法 MCP_AUTH_MODE: {mode!r}（可选值: static | oauth | both）"
+        f"非法 MCP_AUTH_MODE: {mode!r}（静态 token 通道已移除，仅支持 oauth；"
+        "请同步删除环境中的 MCP_AUTH_TOKEN）"
     )

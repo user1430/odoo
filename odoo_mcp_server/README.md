@@ -41,15 +41,19 @@ pip install -e .
 | `MCP_TRANSPORT` | 传输方式：`stdio` / `streamable-http` / `sse` | `stdio` |
 | `MCP_HOST` | HTTP 模式监听地址（对外部署改 `0.0.0.0`） | `127.0.0.1` |
 | `MCP_PORT` | HTTP 模式监听端口 | `8080` |
-| `MCP_AUTH_MODE` | HTTP 鉴权模式：`static`（仅静态 Token）/ `oauth`（仅 OAuth）/ `both`（先静态后 OAuth） | `both` |
-| `MCP_AUTH_TOKEN` | 静态 Token；mode 含 `static` 时请求需带 `Authorization: Bearer <token>` | 空（static 路径永不匹配，fail-closed） |
-| `OAUTH_USERINFO_ENDPOINT` | OAuth userinfo 校验端点（GET，200=有效，401=无效） | `https://copilot.tencent.com/oauth2/userinfo` |
+| `MCP_AUTH_MODE` | HTTP 鉴权模式：仅 `oauth`（静态 token 通道已移除，填 `static`/`both` 启动即报错） | `oauth` |
+| `OAUTH_INTROSPECTION_ENDPOINT` | introspection 校验端点（POST，RFC 7662，`active=true` 放行；配置后优先于 userinfo） | 空（未配置走 userinfo） |
+| `OAUTH_INTROSPECTION_CLIENT_ID` / `OAUTH_INTROSPECTION_CLIENT_SECRET` | introspection 客户端凭据；配了端点则必填，否则启动报错 | 空 |
+| `OAUTH_USERINFO_ENDPOINT` | OAuth userinfo 校验端点（GET，200=有效，401=无效） | `https://odoomcp.duckdns.org/me` |
 | `OAUTH_TOKEN_CACHE_TTL` | OAuth 校验正缓存 TTL（秒）；负缓存固定 60s | `300` |
+| `MCP_PUBLIC_URL` | 资源服务器公网地址（well-known 元数据的 resource 前缀） | `https://odoomcpdemo.duckdns.org` |
+| `OAUTH_AUTHORIZATION_SERVER` | well-known 元数据输出的授权服务器地址 | `https://odoomcp.duckdns.org` |
 
-> OAuth 校验说明：`oauth`/`both` 模式下，MCP Server 以请求 Bearer token 调 userinfo
-> 端点在线校验；校验结果带缓存（正缓存 TTL 见上，负缓存 60s）；userinfo 不可达时，
+> OAuth 校验说明：MCP Server 以请求 Bearer token 调 introspection（优先）或 userinfo
+> 端点在线校验；校验结果带缓存（正缓存 TTL 见上，负缓存 60s）；校验端点不可达时，
 > 无缓存 token 返回 503 `auth_unavailable`，有未过期正缓存放行。日志仅记录
-> sha256(token) 前 8 位，绝不记录 token 原文。回滚：`MCP_AUTH_MODE=static` 重启即恢复改造前行为。
+> sha256(token) 前 8 位，绝不记录 token 原文。匿名可访问 `/.well-known/oauth-protected-resource[/mcp]`
+> （RFC 9728 资源元数据），所有 401 携带 `WWW-Authenticate` 挑战头。
 
 > 安全：不要把 `odoo.conf` 里的 `admin_passwd` 当作业务账号密码；为 MCP 创建一个
 > 仅具备所需模型读/写权限的 Odoo 用户，并优先保持 `ODOO_READONLY=true`。
@@ -97,9 +101,8 @@ WorkBuddy 支持自定义 MCP Server（界面或 CLI 配置）。填入如下配
 # 本机调试（仅监听回环）
 MCP_TRANSPORT=streamable-http MCP_PORT=8080 odoo-mcp-server
 
-# 局域网/对外部署：监听所有网卡 + Bearer Token 鉴权
-MCP_TRANSPORT=streamable-http MCP_HOST=0.0.0.0 MCP_PORT=8080 \
-MCP_AUTH_TOKEN=你的随机长Token odoo-mcp-server
+# 局域网/对外部署：监听所有网卡（HTTP 模式强制 OAuth 校验，无 token 一律 401）
+MCP_TRANSPORT=streamable-http MCP_HOST=0.0.0.0 MCP_PORT=8080 odoo-mcp-server
 ```
 
 端点地址（`MCP_TRANSPORT` 决定）：
@@ -117,12 +120,15 @@ MCP_AUTH_TOKEN=你的随机长Token odoo-mcp-server
 {
   "mcpServers": {
     "odoo-manufacturing": {
-      "url": "http://<服务器IP>:8080/mcp",
-      "headers": { "Authorization": "Bearer 你的随机长Token" }
+      "url": "https://<服务器域名>/mcp",
+      "headers": { "Authorization": "Bearer <IdP 签发的 access_token>" }
     }
   }
 }
 ```
+
+> token 从授权服务器（IdP）领取：本地复现时访问 IdP 的 `/client` 自测页跑授权码流程；
+> 企业连接器（oauth2_code）则由平台自动完成授权并注入 token，无需手工配置。
 
 ### 云端部署拓扑
 
@@ -135,8 +141,8 @@ MCP_AUTH_TOKEN=你的随机长Token odoo-mcp-server
 1. **Odoo 可达性**：MCP Server 部署在哪，`ODOO_URL` 就要能连到哪。两种常见做法：
    - 整套（Odoo + MCP Server）一起部署到云服务器；
    - MCP Server 留在本机，通过 frp / Tailscale / 云主机反代打通到本机 Odoo。
-2. **必须加鉴权**：设置 `MCP_AUTH_TOKEN`，或在反向代理（Nginx/Caddy）层做 TLS + 认证后再放行。
-3. **防火墙**：只放行反向代理端口；Odoo 的 8069 保持 `127.0.0.1` 绑定，不要直接暴露公网。
+2. **鉴权内置**：HTTP 模式强制 OAuth Bearer 校验（无有效 token 一律 401），TLS 由反向代理（Caddy/Nginx）终结。
+3. **防火墙**：只放行反向代理端口（80/443）；MCP Server 保持 `127.0.0.1` 绑定由反代转发；Odoo 的 8069 保持 `127.0.0.1` 绑定，不要直接暴露公网。
 
 ## 云端部署现状（<REGION>轻量服务器）
 
