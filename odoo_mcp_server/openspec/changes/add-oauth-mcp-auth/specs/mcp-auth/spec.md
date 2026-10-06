@@ -57,4 +57,4 @@ MCP Server 的 HTTP 传输 SHALL 支持 `MCP_AUTH_MODE` 环境变量，取值 `s
 
 #### Requirement: 已知限制（演示期接受）
 
-缓存放行意味着 Keycloak 侧撤销 token 后最长 300s 内仍可通过；后续如需更强一致性 SHALL 可替换为 JWT 本地验签（JWKS）或 introspection 端点，本规格不阻塞该演进。
+实测（2026-10-06）：copilot realm 的 userinfo 仅校验签名与有效期，**不检查 SSO 会话与吊销状态**——IdP 登出、POST /oauth2/revoke（302 非标准端点）均不能使未过期 token 失效；本中间件以 userinfo 为准，故此类 token 在到期前始终放行。缓存放行另叠加最长 300s 的撤销感知延迟。后续如需更强一致性 SHALL 可替换为 JWT 本地验签（JWKS）或 introspection 端点，本规格不阻塞该演进。

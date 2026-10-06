@@ -19,8 +19,8 @@
 
 ## 3. 联调（依赖对侧任务 2.1 完成）
 
-- [ ] 3.1 从 `http://127.0.0.1:3001` 登录复制完整 token，配置 MCP 客户端（`Authorization: Bearer <token>`）调本机 8081 → 全工具可用
-- [ ] 3.2 token 过期后（或手动失效）→ 401，重新登录取新 token 恢复
+- [x] 3.1 从 `http://127.0.0.1:3001` 登录复制完整 token，配置 MCP 客户端（`Authorization: Bearer <token>`）调本机 8081 → 全工具可用（initialize/17 tools/odoo_ping/list_production_orders 真实数据；pos-hit 命中；日志脱敏）
+- [x] 3.2 token 过期后（或手动失效）→ 401，重新登录取新 token 恢复（前半实测：该 IdP userinfo 不查会话/吊销，未过期 token 无法人工失效；401 拒绝路径已由 2.3/2.5/403 用例覆盖，见 spec 已知限制。后半：重新登录取新 token → 放行 ✅）
 
 ## 4. 提交与归档
 
