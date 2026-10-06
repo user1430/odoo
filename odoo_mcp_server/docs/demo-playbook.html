@@ -164,7 +164,7 @@ footer.end .seal-line{font-family:var(--serif);font-weight:900;font-size:20px;co
 <!-- ============ 侧边导航 ============ -->
 <nav class="sidenav">
   <div class="brand">ODOO × MCP</div>
-  <div class="sub">连接器演示与教学手册<br>v1.1 · 2026-10-06</div>
+  <div class="sub">连接器演示与教学手册<br>v1.2 · 2026-10-06</div>
   <a href="#ch0"><span class="no">00</span>这份材料怎么用</a>
   <a href="#ch1"><span class="no">01</span>五分钟看懂系统</a>
   <a href="#ch2"><span class="no">02</span>重新启动演示</a>
@@ -173,7 +173,7 @@ footer.end .seal-line{font-family:var(--serif);font-weight:900;font-size:20px;co
   <a href="#ch5"><span class="no">05</span>踩坑图鉴</a>
   <a href="#ch6"><span class="no">06</span>演讲与录制建议</a>
   <a href="#ch7"><span class="no">07</span>附录 · 速查</a>
-  <div class="foot">凭据安全提醒：本手册不含真实密钥<br>与服务器地址；私有信息见本地<br>deployment.md（勿外传）。</div>
+  <div class="foot">凭据安全提醒：本手册不含真实密钥<br>与服务器地址；私有信息见本地<br>deployment.local.md（勿外传）。</div>
 </nav>
 
 <!-- ============ 主内容 ============ -->
@@ -203,7 +203,7 @@ footer.end .seal-line{font-family:var(--serif);font-weight:900;font-size:20px;co
     <tr><td><b>教别人开发连接器</b></td><td>第 4、5 章</td><td>提示词化复现（AI 代跑，人做讲解）+ 高频避坑图鉴</td></tr>
   </table>
   <div class="callout tip"><b>给讲师的一句话</b>对 IT 基础薄弱的听众，<b>永远不要先讲术语</b>。先让他们看到「在 WorkBuddy 里问一句话，AI 直接查出 Odoo 里的生产订单」，再回头解释。本手册的原则是：<b>能让 AI 跑的绝不让学员手敲</b>——手敲错了他们不知道怎么办，AI 跑错了会自己修。</div>
-  <div class="callout info"><b>关于服务器信息的说明</b>本手册 intentionally 不出现演示云服务器的地址与归属——那是讲师自己的机器。<b>任何想复刻这套环境的团队，都需要自备一台具备公网入口的云服务器</b>，所需资源清单见第 4 章开头。讲师自己的私有部署细节保存在本地 <code>docs/deployment.md</code>（不随材料分发）。</div>
+  <div class="callout info"><b>关于服务器信息的说明</b>本手册刻意不出现演示云服务器的地址与归属——那是讲师自己的机器。<b>任何想复刻这套环境的团队，都需要自备一台具备公网入口的云服务器</b>，所需资源清单见第 4 章开头。公开仓库里的 <code>deployment.md</code> 是脱敏版；含真实地址的完整运维手册是 <code>docs/deployment.local.md</code>，仅在讲师本机（gitignored，不分发）。</div>
 </section>
 
 <!-- ============ 第 1 章 ============ -->
@@ -305,7 +305,7 @@ footer.end .seal-line{font-family:var(--serif);font-weight:900;font-size:20px;co
     <tr><td>授权登录页点了没反应、反复回弹</td><td>浏览器 cookie 卡死</td><td><b>换无痕窗口</b>，立刻恢复</td></tr>
   </table>
 
-  <div class="callout warn"><b>两条遗留事项（不影响演示，择机处理）</b>① 云服务器防火墙里 8080 端口的死规则需在控制台手动删除（服务已绑 127.0.0.1，公网本不可达）；② 两侧仓库代码尚未 push 到远端，仅有本地提交。</div>
+  <div class="callout warn"><b>两条遗留事项（不影响演示，择机处理）</b>① 云服务器防火墙里 8080 端口的死规则需在控制台手动删除（服务已绑 127.0.0.1，公网本不可达）；② odoo 仓库已脱敏公开推送，但 oauthDemo（IdP）与 codebuddyOauth 仍在本地未公开——学员要 IdP 代码需找讲师。</div>
 </section>
 
 <!-- ============ 第 3 章 ============ -->
@@ -318,7 +318,7 @@ footer.end .seal-line{font-family:var(--serif);font-weight:900;font-size:20px;co
       <span class="when">起点 · DAY 1 上午</span>
       <h4>静态 Token 版：能跑，但像一把永不换的万能钥匙</h4>
       <div class="motive"><b>问题驱动：</b>最初所有客户端共用同一个写死的 Bearer Token。谁拿到谁就是"管理员"，泄露无法收场，离职无法回收，审计无法区分人。<b>企业场景下这不可接受</b>——这就是整个改造的动机。</div>
-      <div class="xref"><span class="k">对话检索词</span> 「静态 token」「MCP_AUTH_TOKEN」 · <span class="k">OpenSpec</span>（基线，无提案） · <span class="k">Commit</span> odoo 基线 38daf0c</div>
+      <div class="xref"><span class="k">对话检索词</span> 「静态 token」「MCP_AUTH_TOKEN」 · <span class="k">OpenSpec</span>（基线，无提案） · <span class="k">Commit</span> odoo 基线 ec1a407</div>
     </div>
     <div class="tl-item">
       <span class="when">Change① · DAY 1</span>
@@ -330,7 +330,7 @@ footer.end .seal-line{font-family:var(--serif);font-weight:900;font-size:20px;co
       <span class="when">Change② · DAY 2 上午</span>
       <h4>给 MCP 服务器装上"验凭证闸机"</h4>
       <div class="motive"><b>思路：</b>在 odoo-mcp 前加鉴权中间件：收到请求先问 IdP「这张凭证有效吗」（userinfo/introspection），有效才放行，带正负缓存避免每次出网。<b>灰度策略：</b>静态与 OAuth 双通道并存（mode=both），旧客户端零影响，新链路慢慢切。</div>
-      <div class="xref"><span class="k">对话检索词</span> 「auth mode=both」「scope=openid」「正负缓存」 · <span class="k">OpenSpec</span> add-oauth-mcp-auth · <span class="k">Commit</span> odoo d3f8840 → 1197c73；codebuddyOauth 8068c3f</div>
+      <div class="xref"><span class="k">对话检索词</span> 「auth mode=both」「scope=openid」「正负缓存」 · <span class="k">OpenSpec</span> add-oauth-mcp-auth · <span class="k">Commit</span> odoo 9bd9d30 → 2223822；codebuddyOauth 8068c3f</div>
     </div>
     <div class="tl-item gold">
       <span class="when">关键转折 · DAY 2 下午</span>
@@ -348,7 +348,7 @@ footer.end .seal-line{font-family:var(--serif);font-weight:900;font-size:20px;co
       <span class="when">收官 · DAY 2 傍晚</span>
       <h4>连接器配通 → 销毁万能钥匙（OAuth-only）→ 文档三件套</h4>
       <div class="motive"><b>收官动作：</b>企业连接器配通（17 个工具可用）→ 观察期后删除静态通道（原值即焚、不留档）→ 上线 HTTPS 域名入口 → 补齐 deployment / reproduction / retrospective 三份文档。<b>破坏性变更永远带三件套：快照、改前基线、秒级回滚位。</b></div>
-      <div class="xref"><span class="k">对话检索词</span> 「MCP_AUTH_MODE=oauth」「remove-static-token」 · <span class="k">OpenSpec</span> archive/2026-10-06-remove-static-token · <span class="k">Commit</span> odoo a05457c → a685713</div>
+      <div class="xref"><span class="k">对话检索词</span> 「MCP_AUTH_MODE=oauth」「remove-static-token」 · <span class="k">OpenSpec</span> archive/2026-10-06-remove-static-token · <span class="k">Commit</span> odoo 2543e5d → dc277da</div>
     </div>
   </div>
 
@@ -531,7 +531,8 @@ footer.end .seal-line{font-family:var(--serif);font-weight:900;font-size:20px;co
   <h3>文档地图（仓库内）</h3>
   <table>
     <tr><th style="width:260px">文件</th><th>用途</th></tr>
-    <tr><td><code>docs/deployment.md</code></td><td>云端部署与运维手册（<b>含服务器地址等私有信息，仅存本地、勿分发</b>）</td></tr>
+    <tr><td><code>docs/deployment.md</code></td><td>云端部署与运维手册（公开脱敏版，服务器地址以 <code>&lt;SERVER_IP&gt;</code> 占位）</td></tr>
+    <tr><td><code>docs/deployment.local.md</code></td><td>完整真实版运维手册（<b>含服务器地址，gitignored 仅存本机、勿分发</b>）</td></tr>
     <tr><td><code>docs/reproduction.md</code></td><td>三条复现路径：纯本地 / 借用演示环境 / 混合（第 4 章提示词的数据源）</td></tr>
     <tr><td><code>docs/retrospective.md</code></td><td>18 条踩坑复盘完整版（含已略去的低频坑）</td></tr>
     <tr><td><code>openspec/</code></td><td>变更提案与归档：每次改动的动机、方案、任务留痕</td></tr>
@@ -550,7 +551,7 @@ footer.end .seal-line{font-family:var(--serif);font-weight:900;font-size:20px;co
 
 <footer class="end">
   <div class="seal-line">先验证链路，再动生产；胆量来自退路。</div>
-  <p>Odoo MCP 连接器 · 演示重启与开发教学手册 · v1.1 · 2026-10-06<br>配套文档：deployment.md（私有）/ reproduction.md / retrospective.md</p>
+  <p>Odoo MCP 连接器 · 演示重启与开发教学手册 · v1.2 · 2026-10-06<br>配套文档：deployment.md（公开脱敏版）/ deployment.local.md（私有完整版）/ reproduction.md / retrospective.md</p>
   <a class="totop" href="#ch0">回到顶部 ↑</a>
 </footer>
 
