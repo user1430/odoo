@@ -29,8 +29,8 @@
 
 ## 5. 阶段 3：云端灰度（另起终端窗口执行，每步留快照）
 
-- [ ] 5.1 云端快照：`tar czf /root/odoo-mcp-backup-$(date +%F).tgz /opt/odoo-mcp-server` + `systemctl cat odoo-mcp > ~/odoo-mcp.unit.bak`
-- [ ] 5.2 部署新版 + `MCP_AUTH_MODE=both`，重启；静态 token 链路回归（既有客户端不受影响）
-- [ ] 5.3 OAuth token 链路实测（经 `-L` 转发绕过办公网 8080 封锁）
-- [ ] 5.4 **回滚演练**：立即用快照回滚一次并验证静态链路 → 再重新部署（证明快照真能用）
+- [x] 5.1 云端快照：`/root/odoo-mcp-backup-2026-10-06.tgz`（19M）+ `~/odoo-mcp.unit.bak`（658B）（2026-10-06 执行）
+- [x] 5.2 部署新版 + `MCP_AUTH_MODE=both`（drop-in `/etc/systemd/system/odoo-mcp.service.d/override.conf`，未动 MCP_AUTH_TOKEN），重启日志 `auth mode=both`；静态回归：错 token 401 / 对 token initialize+odoo_ping=18.0 ✅
+- [x] 5.3 OAuth 链路实测（经 `-L 18080` 转发）：client_credentials+openid token → initialize+odoo_ping 放行（pos-hit）；伪造 token 401 且 60s 内复求 `cache=neg-hit`；journalctl 仅 sha256[:8]，原文 0 次 ✅
+- [x] 5.4 **回滚演练**：快照解回 + unit 还原 + 删 drop-in → 静态 200 / OAuth 401（旧码行为确认）→ 重新部署（md5 一致）→ 双链路复测全绿 ✅（证明快照真能用）
 - [ ] 5.5 观察期后择期开 `remove-static-token` 提案（不在本 change）
