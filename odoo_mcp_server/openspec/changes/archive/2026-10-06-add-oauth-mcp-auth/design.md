@@ -4,7 +4,7 @@
 
 - 现状：`_BearerAuthMiddleware`（server.py:246）做静态 token 比对；云端 systemd 以 `MCP_AUTH_TOKEN` 运行。
 - 目标形态：企业连接器（oauth2_code）注入用户 OAuth token；演示过渡期静态 token 仍需可用（既有 MCP 客户端配置不动）。
-- 约束：`mcp>=1.8.0,<2.0`；纯 ASGI 中间件栈（uvicorn 承载）；云端新加坡节点出网可达 `copilot.tencent.com`；公司办公网代理会拦该域名（本机开发需注意）。
+- 约束：`mcp>=1.8.0,<2.0`；纯 ASGI 中间件栈（uvicorn 承载）；云端<REGION>节点出网可达 `copilot.tencent.com`；公司办公网代理会拦该域名（本机开发需注意）。
 
 ## Goals & Non-Goals
 
